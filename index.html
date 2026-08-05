@@ -1,0 +1,1023 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Assembly team at STM</title>
+  <style>
+    :root {
+      --bg: #07111f;
+      --panel: rgba(14, 29, 48, 0.92);
+      --panel-2: #10243b;
+      --line: rgba(157, 190, 219, 0.18);
+      --text: #edf7ff;
+      --muted: #9eb3c7;
+      --cyan: #45d7ff;
+      --green: #56f39a;
+      --amber: #ffca68;
+      --red: #ff6b7a;
+      --blue-board: #176ca0;
+      --code: #071521;
+      --shadow: 0 20px 55px rgba(0, 0, 0, 0.34);
+    }
+
+    * { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 12% 8%, rgba(69, 215, 255, 0.12), transparent 30rem),
+        radial-gradient(circle at 88% 18%, rgba(86, 243, 154, 0.08), transparent 28rem),
+        var(--bg);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    button { font: inherit; }
+
+    .page-shell { width: min(1500px, calc(100% - 28px)); margin: 0 auto; padding: 20px 0 42px; }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 16px 18px;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: rgba(7, 17, 31, 0.82);
+      backdrop-filter: blur(14px);
+      position: sticky;
+      top: 10px;
+      z-index: 20;
+      box-shadow: 0 10px 32px rgba(0, 0, 0, 0.2);
+    }
+
+    .brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+    .brand-mark {
+      width: 42px; height: 42px; border-radius: 13px; display: grid; place-items: center;
+      color: #03131d; background: linear-gradient(135deg, var(--cyan), var(--green));
+      font-weight: 900; box-shadow: 0 0 22px rgba(69, 215, 255, 0.32);
+    }
+    .brand h1 { margin: 0; font-size: clamp(1rem, 2vw, 1.25rem); letter-spacing: -0.02em; }
+    .brand small { color: var(--muted); display: block; margin-top: 2px; }
+
+    .controls { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+    .control-btn {
+      border: 1px solid var(--line); color: var(--text); background: #10233a;
+      padding: 10px 14px; border-radius: 12px; cursor: pointer; transition: .18s ease;
+    }
+    .control-btn:hover { transform: translateY(-1px); border-color: rgba(69, 215, 255, .55); }
+    .control-btn.primary { background: linear-gradient(135deg, #1dbce9, #38d78d); color: #03131d; border: 0; font-weight: 800; }
+    .control-btn:disabled { opacity: .48; cursor: not-allowed; transform: none; }
+    .control-btn.nvic { border-color: rgba(255,202,104,.55); color: var(--amber); }
+
+    .hero {
+      display: grid; grid-template-columns: 1.1fr .9fr; gap: 18px; margin-top: 18px;
+    }
+
+    .panel {
+      background: var(--panel); border: 1px solid var(--line); border-radius: 22px;
+      box-shadow: var(--shadow); overflow: hidden;
+    }
+
+    .panel-heading { padding: 18px 20px 0; }
+    .panel-heading h2 { margin: 0; font-size: 1.05rem; }
+    .panel-heading p { color: var(--muted); margin: 7px 0 0; font-size: .9rem; line-height: 1.45; }
+
+    .board-wrap { padding: 8px 18px 18px; position: relative; }
+    #boardSvg { display: block; width: 100%; max-height: 780px; margin: 0 auto; filter: drop-shadow(0 24px 26px rgba(0,0,0,.35)); }
+    .board-part { cursor: pointer; transition: filter .18s ease, opacity .18s ease; }
+    .board-part:hover { filter: brightness(1.22) drop-shadow(0 0 8px rgba(69,215,255,.55)); }
+    .board-label { font-size: 15px; fill: #17394d; font-weight: 800; pointer-events: none; }
+    .tiny-label { font-size: 10px; fill: #31566a; font-weight: 700; pointer-events: none; }
+    .silk-name { font-size: 19px; fill: #176799; font-weight: 900; letter-spacing: .06em; pointer-events: none; }
+    #mcuGroup text, .stlink-chip-text { fill: #eef9ff; }
+    .pin-hole { fill: #07111f; stroke: #567991; stroke-width: 1.5; }
+    .signal-path { fill: none; stroke: rgba(69, 215, 255, .12); stroke-width: 9; stroke-linecap: round; stroke-dasharray: 12 15; }
+    .signal-path.live { stroke: var(--amber); animation: signalFlow .55s linear infinite; filter: drop-shadow(0 0 7px var(--amber)); }
+    @keyframes signalFlow { to { stroke-dashoffset: -27; } }
+
+    #b1Cap, #b2Cap { transition: transform .16s ease; transform-origin: center; }
+    #b1Group.pressed #b1Cap, #b2Group.pressed #b2Cap { transform: translateY(6px); filter: brightness(.74); }
+    .led-glow, .led-glow-red { opacity: 0; transition: opacity .25s ease; }
+    #ld2Group.on .led-glow { opacity: 1; animation: ledBreath 1.5s ease-in-out infinite; }
+    #ld2Group.on .led-core { fill: #79ffae; filter: drop-shadow(0 0 12px #56f39a); }
+    #ld3Group.on .led-glow-red { opacity: 1; animation: ledBreath 1s ease-in-out infinite; }
+    #ld3Group.on .led-core-red { fill: #ff596c; filter: drop-shadow(0 0 13px #ff4057); }
+    @keyframes ledBreath { 50% { opacity: .55; } }
+    #mcuPulse { opacity: 0; }
+    #mcuGroup.active #mcuPulse { opacity: 1; animation: chipPulse .8s ease-out infinite; }
+    @keyframes chipPulse { from { r: 64; opacity: .7; } to { r: 92; opacity: 0; } }
+
+    .story-panel { display: flex; flex-direction: column; min-height: 760px; }
+    .phase-area { padding: 20px; }
+    .phase-topline { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+    .phase-number { color: var(--cyan); text-transform: uppercase; font-size: .76rem; font-weight: 900; letter-spacing: .12em; }
+    .status-pill { padding: 7px 10px; border-radius: 999px; background: rgba(86, 243, 154, .12); border: 1px solid rgba(86,243,154,.25); color: var(--green); font-size: .78rem; font-weight: 800; }
+    .phase-area h2 { margin: 13px 0 8px; font-size: clamp(1.45rem, 3vw, 2.1rem); letter-spacing: -.035em; }
+    .phase-area > p { margin: 0; color: var(--muted); line-height: 1.62; min-height: 52px; }
+
+    .timeline { display: flex; gap: 4px; margin: 20px 0; }
+    .timeline-step { flex: 1; min-width: 3px; height: 7px; border-radius: 99px; background: #1a344d; transition: .28s ease; }
+    .timeline-step.done { background: rgba(69,215,255,.44); }
+    .timeline-step.active { background: var(--cyan); box-shadow: 0 0 12px rgba(69,215,255,.7); }
+
+    .flow-strip { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin: 18px 0; }
+    .flow-node {
+      position: relative; min-width: 0; padding: 11px 6px; border-radius: 12px; text-align: center;
+      color: var(--muted); background: #0b1a2b; border: 1px solid var(--line); font-size: .78rem; transition: .25s ease;
+    }
+    .flow-node:not(:last-child)::after { content: '›'; position: absolute; right: -8px; top: 9px; color: #54718a; font-size: 1.1rem; z-index: 2; }
+    .flow-node.active { color: #07111f; background: var(--amber); border-color: var(--amber); transform: translateY(-2px); box-shadow: 0 8px 20px rgba(255,202,104,.22); font-weight: 900; }
+    .flow-node.done { color: var(--cyan); border-color: rgba(69,215,255,.42); }
+
+    .simple-box {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 14px;
+      border-radius: 16px; border: 1px solid var(--line); background: rgba(4, 15, 27, .58);
+    }
+    .simple-stat { padding: 11px; border-radius: 12px; background: #10243b; }
+    .simple-stat span { display: block; color: var(--muted); font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; }
+    .simple-stat strong { display: block; margin-top: 6px; font-size: .95rem; overflow-wrap: anywhere; }
+
+    .burst-control { display: none; margin: -4px 18px 13px; padding: 14px; border-radius: 15px; border: 1px solid rgba(255,107,122,.30); background: rgba(255,107,122,.06); }
+    .burst-control.open { display: block; animation: revealControl .2s ease-out; }
+    @keyframes revealControl { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+    .burst-control-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .burst-control-head strong { color: var(--red); font-size: .9rem; }
+    .burst-count { min-width: 34px; padding: 4px 9px; border-radius: 9px; color: #07111f; background: var(--red); text-align: center; font-weight: 900; }
+    .burst-control input[type="range"] { width: 100%; margin: 12px 0 8px; accent-color: var(--red); }
+    .burst-actions { display: flex; gap: 9px; align-items: center; justify-content: space-between; }
+    .burst-actions p { margin: 0; color: var(--muted); font-size: .75rem; line-height: 1.4; }
+    .burst-start { flex: 0 0 auto; border: 0; border-radius: 10px; padding: 8px 11px; cursor: pointer; color: white; background: #bd394b; font-weight: 800; }
+    .request-stack { display: flex; gap: 5px; min-height: 31px; margin-top: 10px; align-items: flex-end; }
+    .request-chip { flex: 1; min-width: 28px; padding: 6px 3px; border-radius: 7px; text-align: center; color: #ffb8c0; background: #361923; border: 1px solid #71303d; font: 10px ui-monospace, monospace; transition: .2s ease; }
+    .request-chip.done { color: #07111f; background: var(--green); border-color: var(--green); }
+    .request-chip.active { color: #07111f; background: var(--cyan); border-color: var(--cyan); transform: translateY(-4px); }
+    .request-chip.pending { color: #07111f; background: var(--amber); border-color: var(--amber); }
+    .request-chip.lost { color: #ff9eaa; background: #32141c; border-color: var(--red); text-decoration: line-through; opacity: .72; }
+
+    .bottom-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 18px; }
+    .registers, .code-panel { padding: 18px; }
+    .section-title { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+    .section-title h2 { font-size: 1.05rem; margin: 0; }
+    .section-title span { color: var(--muted); font-size: .78rem; }
+
+    .register-list { display: grid; gap: 8px; }
+    .reg-row {
+      display: grid; grid-template-columns: 1.25fr 1fr auto; align-items: center; gap: 10px;
+      padding: 11px 12px; border-radius: 12px; border: 1px solid transparent; background: #0c1c2e; transition: .25s ease;
+    }
+    .reg-row.hot { border-color: rgba(255,202,104,.52); background: rgba(255,202,104,.09); transform: translateX(3px); }
+    .reg-name { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .82rem; color: #cee8fa; }
+    .reg-meaning { font-size: .77rem; color: var(--muted); }
+    .bit-value { min-width: 42px; text-align: center; padding: 5px 8px; border-radius: 8px; background: #071521; font-family: ui-monospace, monospace; color: var(--cyan); font-weight: 800; }
+    .bit-value.one { color: #07111f; background: var(--amber); box-shadow: 0 0 12px rgba(255,202,104,.28); }
+
+    .register-group-label { margin: 7px 2px 2px; color: var(--cyan); font-size: .72rem; font-weight: 900; letter-spacing: .09em; text-transform: uppercase; }
+    .register-group-label.timer { color: var(--red); margin-top: 13px; }
+    .nvic-visual { padding: 13px; border-radius: 15px; background: #081827; border: 1px solid rgba(255,202,104,.42); overflow: auto; }
+    .nvic-visual.floating { display: none; position: fixed; z-index: 100; left: 50%; top: 50%; width: min(850px, calc(100vw - 32px)); height: min(610px, calc(100vh - 32px)); min-width: 580px; min-height: 330px; margin: 0; resize: both; transform: translate(-50%, -50%); box-shadow: 0 28px 90px rgba(0,0,0,.72); }
+    .nvic-visual.floating.open { display: block; }
+    .nvic-window-bar { position: sticky; top: -13px; z-index: 3; display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: -13px -13px 12px; padding: 12px 14px; background: #142b43; border-bottom: 1px solid var(--line); cursor: move; user-select: none; }
+    .nvic-window-bar strong { color: var(--amber); }
+    .nvic-window-actions { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: .72rem; }
+    .nvic-close { border: 1px solid rgba(255,107,122,.5); border-radius: 8px; padding: 5px 9px; color: white; background: #8d2635; cursor: pointer; }
+    .nvic-visual-head { min-width: 560px; display: flex; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+    .nvic-visual-head b { font-size: .85rem; }
+    .nvic-visual-head span { color: var(--muted); font-size: .72rem; }
+    .bit-register { min-width: 560px; margin-top: 9px; }
+    .bit-register-title { display: flex; align-items: center; justify-content: space-between; margin-bottom: 5px; font: .72rem ui-monospace, monospace; color: #b9d4e7; }
+    .bit-register-title output { color: var(--cyan); font-weight: 900; }
+    .bit-grid { display: grid; grid-template-columns: repeat(32, 1fr); gap: 2px; }
+    .nvic-bit { height: 18px; display: grid; place-items: center; border-radius: 3px; background: #173047; color: #6d89a0; font: 7px ui-monospace, monospace; transition: .22s ease; }
+    .nvic-bit.pending { color: #07111f; background: var(--amber); transform: translateY(-2px); box-shadow: 0 0 9px rgba(255,202,104,.7); }
+    .nvic-bit.active { color: #07111f; background: var(--green); transform: translateY(-2px); box-shadow: 0 0 9px rgba(86,243,154,.7); }
+    .nvic-bit.target:not(.pending):not(.active) { color: #cce9f7; outline: 1px solid #4e7e9b; }
+
+    .stack-box { margin-top: 14px; border-radius: 15px; border: 1px solid var(--line); overflow: hidden; }
+    .stack-head { padding: 11px 12px; display: flex; justify-content: space-between; background: #132a42; font-size: .84rem; }
+    .stack-state { color: var(--muted); }
+    .stack-state.saved { color: var(--green); font-weight: 800; }
+    .stack-frame { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--line); max-height: 0; opacity: 0; transition: max-height .55s ease, opacity .35s ease; }
+    .stack-frame.visible { max-height: 210px; opacity: 1; }
+    .stack-layers { display: flex; gap: 7px; padding: 0 10px; max-height: 0; opacity: 0; overflow: hidden; transition: .3s ease; background: #091827; }
+    .stack-layers.visible { max-height: 70px; opacity: 1; padding-top: 9px; padding-bottom: 9px; }
+    .stack-layer { flex: 1; padding: 7px; border-radius: 8px; text-align: center; color: #baf7d3; background: #12324a; border: 1px solid #285675; font-size: .7rem; }
+    .stack-layer.nested { color: #07111f; background: var(--amber); border-color: var(--amber); }
+    .stack-cell { padding: 10px 6px; background: #091827; text-align: center; }
+    .stack-cell span { display: block; color: var(--muted); font-size: .68rem; }
+    .stack-cell code { display: block; margin-top: 4px; color: #baf7d3; font-size: .72rem; }
+
+    .tabs { display: flex; gap: 7px; margin-bottom: 10px; flex-wrap: wrap; }
+    .tab { border: 1px solid var(--line); color: var(--muted); background: #0b1b2c; border-radius: 9px; padding: 7px 10px; cursor: pointer; font-size: .78rem; }
+    .tab.active { color: #07111f; background: var(--cyan); border-color: var(--cyan); font-weight: 800; }
+    .code-view { background: var(--code); border: 1px solid var(--line); border-radius: 14px; padding: 12px 0; overflow: auto; min-height: 350px; }
+    .code-file { display: none; counter-reset: line; }
+    .code-file.active { display: block; }
+    .code-line { display: block; min-width: 650px; padding: 2px 14px 2px 54px; position: relative; color: #c6d9e9; font: 12.5px/1.62 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; white-space: pre; transition: .2s ease; }
+    .code-line::before { counter-increment: line; content: counter(line); position: absolute; left: 14px; width: 24px; text-align: right; color: #45627a; }
+    .code-line.highlight { color: #fff4ce; background: rgba(255,202,104,.13); border-left: 3px solid var(--amber); padding-left: 51px; }
+    .kw { color: #ef8bff; } .fn { color: #5be2ff; } .cm { color: #6e8fa5; } .num { color: #ffcf73; } .type { color: #7df0b1; }
+
+    .footnote { text-align: center; color: #6f879c; font-size: .74rem; padding: 17px 6px 0; }
+
+    .toast {
+      position: fixed; left: 50%; bottom: 24px; transform: translate(-50%, 30px); opacity: 0;
+      padding: 11px 15px; border-radius: 12px; color: #07111f; background: var(--amber); font-weight: 800;
+      transition: .25s ease; z-index: 50; pointer-events: none; box-shadow: var(--shadow);
+    }
+    .toast.show { transform: translate(-50%, 0); opacity: 1; }
+
+    @media (max-width: 1050px) {
+      .hero, .bottom-grid { grid-template-columns: 1fr; }
+      .story-panel { min-height: 0; }
+      #boardSvg { max-height: 720px; }
+    }
+    @media (max-width: 720px) {
+      .page-shell { width: min(100% - 16px, 1500px); padding-top: 8px; }
+      .topbar { align-items: flex-start; flex-direction: column; top: 4px; }
+      .controls { width: 100%; justify-content: stretch; }
+      .control-btn { flex: 1; padding: 9px; }
+      .flow-strip { grid-template-columns: 1fr; }
+      .flow-node:not(:last-child)::after { content: '↓'; right: 50%; top: auto; bottom: -14px; }
+      .simple-box { grid-template-columns: 1fr 1fr; }
+      .nvic-visual.floating { min-width: 0; width: calc(100vw - 16px); }
+      .stack-frame { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+  <main class="page-shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark">WBA</div>
+        <div>
+          <h1>Assembly team at STM</h1>
+          <small>While you are still compiling, we have already assembled.</small>
+        </div>
+      </div>
+      <div class="controls">
+        <button class="control-btn primary" id="pressButton" type="button">Press B1</button>
+        <button class="control-btn" id="previousButton" type="button">Previous</button>
+        <button class="control-btn" id="nextButton" type="button">Next step</button>
+        <button class="control-btn nvic" id="nvicButton" type="button">NVIC window</button>
+        <button class="control-btn" id="autoButton" type="button">Auto demo</button>
+        <button class="control-btn" id="resetButton" type="button">Reset</button>
+      </div>
+    </header>
+
+    <section class="hero">
+      <article class="panel">
+        <div class="panel-heading">
+          <h2>Interactive NUCLEO-WBA55CG board</h2>
+          <p>Use B1 normally or B2 to show trigger loss.</p>
+        </div>
+        <div class="board-wrap">
+          <svg id="boardSvg" viewBox="0 0 740 940" role="img" aria-label="Interactive diagram of the NUCLEO-WBA55CG board">
+            <defs>
+              <linearGradient id="pcb" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fafbf6"/><stop offset="1" stop-color="#d9e1df"/></linearGradient>
+              <linearGradient id="metal" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#d9e4ea"/><stop offset=".5" stop-color="#71828d"/><stop offset="1" stop-color="#eef7fa"/></linearGradient>
+              <radialGradient id="greenGlow"><stop stop-color="#78ffb0" stop-opacity=".8"/><stop offset="1" stop-color="#56f39a" stop-opacity="0"/></radialGradient>
+              <radialGradient id="redGlow"><stop stop-color="#ff6677" stop-opacity=".8"/><stop offset="1" stop-color="#ff4057" stop-opacity="0"/></radialGradient>
+              <pattern id="traces" width="48" height="48" patternUnits="userSpaceOnUse"><path d="M0 12H28V0M12 48V30H48" fill="none" stroke="#6f9caf" stroke-opacity=".10" stroke-width="2"/></pattern>
+            </defs>
+
+            <rect x="84" y="28" width="572" height="874" rx="22" fill="#06101a" opacity=".45"/>
+            <rect x="74" y="18" width="572" height="874" rx="22" fill="url(#pcb)" stroke="#b7c7c8" stroke-width="3"/>
+            <rect x="74" y="18" width="572" height="874" rx="22" fill="url(#traces)"/>
+            <circle cx="101" cy="47" r="10" class="pin-hole"/><circle cx="619" cy="47" r="10" class="pin-hole"/>
+            <circle cx="101" cy="862" r="10" class="pin-hole"/><circle cx="619" cy="862" r="10" class="pin-hole"/>
+            <text x="102" y="84" class="silk-name">NUCLEO-WBA55CG</text>
+            <text x="522" y="84" text-anchor="end" class="tiny-label">STM32 NUCLEO-64</text>
+
+            <g class="board-part" data-name="USB Type-C" data-info="The USB-C connector powers the board and connects the onboard ST-LINK debugger to STM32CubeIDE.">
+              <rect x="286" y="2" width="145" height="55" rx="12" fill="url(#metal)" stroke="#e1edf2" stroke-width="2"/>
+              <rect x="314" y="13" width="89" height="24" rx="9" fill="#17232b"/>
+              <text x="358" y="75" text-anchor="middle" class="board-label">USB-C</text>
+            </g>
+
+            <g class="board-part" data-name="STLINK-V3EC" data-info="The onboard STLINK-V3EC debugger programs the STM32 and lets CubeIDE pause inside either interrupt handler.">
+              <rect x="245" y="90" width="220" height="112" rx="15" fill="#edf1ec" stroke="#7d9298" stroke-width="2"/>
+              <rect x="316" y="116" width="78" height="55" rx="6" fill="#0a1118" stroke="#8097a6"/>
+              <path d="M324 109v-8m12 8v-8m12 8v-8m12 8v-8m12 8v-8M324 179v8m12-8v8m12-8v8m12-8v8m12-8v8" stroke="#b7c6ce" stroke-width="3"/>
+              <text x="355" y="151" text-anchor="middle" class="tiny-label stlink-chip-text">STLINK-V3EC</text>
+              <text x="355" y="193" text-anchor="middle" class="board-label">ST-LINK DEBUGGER</text>
+            </g>
+
+            <g class="board-part" data-name="ST-LINK status LED LD4" data-info="LD4 shows the status of the onboard debugger. It is not controlled by the button example.">
+              <circle cx="506" cy="133" r="15" fill="#d9bc3d" stroke="#fff0a0" stroke-width="3"/>
+              <text x="506" y="163" text-anchor="middle" class="tiny-label">LD4</text>
+            </g>
+
+            <path d="M91 225H629" stroke="#607f90" stroke-width="2" stroke-dasharray="8 7" opacity=".5"/>
+            <text x="112" y="218" class="tiny-label">ST-LINK</text><text x="535" y="218" class="tiny-label">TARGET MCU</text>
+
+            <g class="board-part" data-name="ST Morpho headers CN3/CN4" data-info="The long ST Morpho headers expose the STM32 pins for expansion. No external header or wiring is used in this demo.">
+              <rect x="93" y="265" width="48" height="466" rx="6" fill="#111923" stroke="#6f899a"/>
+              <rect x="579" y="265" width="48" height="466" rx="6" fill="#111923" stroke="#6f899a"/>
+              <g id="leftPins"></g><g id="rightPins"></g>
+              <text x="117" y="753" text-anchor="middle" class="tiny-label">CN4</text>
+              <text x="603" y="753" text-anchor="middle" class="tiny-label">CN3</text>
+            </g>
+
+            <g class="board-part" data-name="Arduino headers CN5/CN6/CN7/CN8" data-info="These four Arduino-compatible headers accept expansion shields. This interrupt example needs no shield.">
+              <rect x="153" y="286" width="34" height="178" rx="4" fill="#151b20"/>
+              <rect x="533" y="286" width="34" height="178" rx="4" fill="#151b20"/>
+              <rect x="153" y="493" width="34" height="163" rx="4" fill="#151b20"/>
+              <rect x="533" y="493" width="34" height="163" rx="4" fill="#151b20"/>
+              <text x="170" y="278" text-anchor="middle" class="tiny-label">CN5 / CN7</text>
+              <text x="550" y="278" text-anchor="middle" class="tiny-label">CN6 / CN8</text>
+            </g>
+
+            <g class="board-part" data-name="MIPI10 / STDC14 connector" data-info="This footprint provides another debug connection. The normal USB/ST-LINK connection is easier for this demonstration.">
+              <rect x="201" y="244" width="87" height="42" rx="5" fill="#15202a" stroke="#a2b9c6"/>
+              <g fill="#caa64c"><circle cx="215" cy="256" r="4"/><circle cx="231" cy="256" r="4"/><circle cx="247" cy="256" r="4"/><circle cx="263" cy="256" r="4"/><circle cx="279" cy="256" r="4"/><circle cx="215" cy="274" r="4"/><circle cx="231" cy="274" r="4"/><circle cx="247" cy="274" r="4"/><circle cx="263" cy="274" r="4"/><circle cx="279" cy="274" r="4"/></g>
+              <text x="245" y="301" text-anchor="middle" class="tiny-label">MIPI10 / STDC14</text>
+            </g>
+
+            <g class="board-part" data-name="MCU RF board and PCB antenna" data-info="The RF daughterboard contains the STM32WBA55CG, its clocks, RF matching parts, and the printed 2.4 GHz antenna.">
+              <rect x="220" y="315" width="282" height="288" rx="10" fill="#f5f4e9" stroke="#8ca3a0" stroke-width="2"/>
+              <path d="M247 337h220v15H271v15h196v15H271v15h196v15H247z" fill="none" stroke="#d7b962" stroke-width="7" stroke-linejoin="round"/>
+              <text x="361" y="429" text-anchor="middle" class="tiny-label">2.4 GHz PCB ANTENNA</text>
+              <g id="mcuGroup" data-name="STM32WBA55CG U1" data-info="The STM32WBA55CG contains the Cortex-M33 CPU, EXTI peripheral, NVIC, flash, RAM, and radio used by this board.">
+                <circle id="mcuPulse" cx="361" cy="502" r="64" fill="none" stroke="#ffca68" stroke-width="5"/>
+                <rect x="302" y="443" width="118" height="118" rx="8" fill="#11171d" stroke="#a7c0ca" stroke-width="2"/>
+                <g stroke="#d4c07a" stroke-width="3"><path d="M314 438v-10m16 10v-10m16 10v-10m16 10v-10m16 10v-10m16 10v-10m16 10v-10M314 566v10m16-10v10m16-10v10m16-10v10m16-10v10m16-10v10m16-10v10M297 455h-10m10 16h-10m10 16h-10m10 16h-10m10 16h-10m10 16h-10m10 16h-10M425 455h10m-10 16h10m-10 16h10m-10 16h10m-10 16h10m-10 16h10m-10 16h10"/></g>
+                <text x="361" y="490" text-anchor="middle" class="board-label">STM32</text>
+                <text x="361" y="512" text-anchor="middle" class="tiny-label">STM32WBA55CG</text>
+                <text x="361" y="533" text-anchor="middle" class="tiny-label">Cortex-M33 + NVIC</text>
+              </g>
+              <g class="board-part" data-name="32 MHz and 32.768 kHz crystals" data-info="The two crystals provide accurate high-speed and low-speed clocks for the MCU and radio.">
+                <rect x="250" y="473" width="32" height="57" rx="15" fill="url(#metal)"/><text x="266" y="548" text-anchor="middle" class="tiny-label">CRYSTALS</text>
+              </g>
+              <g class="board-part" data-name="RF matching network" data-info="Small capacitors and inductors match the radio signal to the PCB antenna. They are not changed by this example.">
+                <g fill="#dacb9a"><rect x="443" y="460" width="34" height="11" rx="2"/><rect x="443" y="479" width="34" height="11" rx="2"/><rect x="443" y="498" width="34" height="11" rx="2"/></g>
+                <text x="460" y="529" text-anchor="middle" class="tiny-label">RF MATCH</text>
+              </g>
+            </g>
+
+            <g class="board-part" data-name="JP1 5V selector and JP2 VDD jumper" data-info="JP1 selects the 5 V source and JP2 is the VDD jumper. Leave them in the normal board configuration for this demo.">
+              <rect x="260" y="632" width="75" height="46" rx="6" fill="#12202b" stroke="#7995a7"/>
+              <rect x="383" y="632" width="75" height="46" rx="6" fill="#12202b" stroke="#7995a7"/>
+              <g fill="#d1aa50"><circle cx="277" cy="653" r="6"/><circle cx="298" cy="653" r="6"/><circle cx="319" cy="653" r="6"/><circle cx="400" cy="653" r="6"/><circle cx="421" cy="653" r="6"/><circle cx="442" cy="653" r="6"/></g>
+              <text x="297" y="695" text-anchor="middle" class="tiny-label">JP1 5V</text><text x="421" y="695" text-anchor="middle" class="tiny-label">JP2 VDD</text>
+            </g>
+
+            <path id="signalPath" class="signal-path" d="M233 764 C270 720, 300 675, 335 606 C350 575, 356 550, 361 521"/>
+            <path id="b2SignalPath" class="signal-path" d="M318 760 C326 690, 340 620, 356 535"/>
+
+            <g id="b1Group" class="board-part" data-name="USER1 button B1" data-info="This is the demo button. B1 is connected to PC13. Pressing it creates a falling edge that requests EXTI13.">
+              <circle cx="223" cy="767" r="35" fill="#0a1721" stroke="#8bb2c8" stroke-width="3"/>
+              <circle id="b1Cap" cx="223" cy="759" r="23" fill="#47c8ee" stroke="#c8f5ff" stroke-width="3"/>
+              <text x="223" y="817" text-anchor="middle" class="board-label">B1</text><text x="223" y="833" text-anchor="middle" class="tiny-label">USER1 / PC13</text>
+            </g>
+            <g id="b2Group" class="board-part" data-name="USER2 button B2" data-info="B2 is connected to PB6 / EXTI6. It shows one active trigger, one pending trigger, and lost extra triggers.">
+              <circle cx="318" cy="767" r="31" fill="#0a1721" stroke="#8bb2c8" stroke-width="3"/><circle id="b2Cap" cx="318" cy="761" r="20" fill="#c1d0d8"/>
+              <text x="318" y="817" text-anchor="middle" class="board-label">B2</text><text x="318" y="833" text-anchor="middle" class="tiny-label">USER2 / PB6</text>
+            </g>
+            <g class="board-part" data-name="USER3 button B3" data-info="B3 is connected to PB7, but it is not used by this example.">
+              <circle cx="413" cy="767" r="31" fill="#0a1721" stroke="#8bb2c8" stroke-width="3"/><circle cx="413" cy="761" r="20" fill="#c1d0d8"/>
+              <text x="413" y="817" text-anchor="middle" class="board-label">B3</text><text x="413" y="833" text-anchor="middle" class="tiny-label">USER3</text>
+            </g>
+            <g id="b4Group" class="board-part" data-name="RESET button B4" data-info="B4 resets the MCU. In this web visualizer it also resets the animation. It is not the interrupt-demo button.">
+              <circle cx="508" cy="767" r="31" fill="#0a1721" stroke="#8bb2c8" stroke-width="3"/><circle cx="508" cy="761" r="20" fill="#ee5969"/>
+              <text x="508" y="817" text-anchor="middle" class="board-label">B4</text><text x="508" y="833" text-anchor="middle" class="tiny-label">RESET</text>
+            </g>
+
+            <g class="board-part" data-name="User LEDs LD1, LD2, and LD3" data-info="This project uses green LD2 on PA9 for normal state and red LD3 on PB8 while the one-second interrupt demonstration is active.">
+              <g><circle cx="303" cy="862" r="13" fill="#2c7096" stroke="#9ccfe9"/><text x="303" y="888" text-anchor="middle" class="tiny-label">LD1</text></g>
+              <g id="ld2Group"><circle class="led-glow" cx="360" cy="862" r="38" fill="url(#greenGlow)"/><circle class="led-core" cx="360" cy="862" r="13" fill="#184e35" stroke="#94ffc0" stroke-width="2"/><text x="360" y="888" text-anchor="middle" class="tiny-label">LD2 / PA9</text></g>
+              <g id="ld3Group"><circle class="led-glow-red" cx="417" cy="862" r="38" fill="url(#redGlow)"/><circle class="led-core-red" cx="417" cy="862" r="13" fill="#59242b" stroke="#ffabb4"/><text x="417" y="888" text-anchor="middle" class="tiny-label">LD3 / PB8</text></g>
+            </g>
+          </svg>
+        </div>
+        <div class="burst-control" id="burstControl">
+          <div class="burst-control-head"><strong>B2 trigger-loss demonstration</strong><output class="burst-count" id="burstCount">4</output></div>
+          <input id="burstSlider" type="range" min="1" max="8" value="4" step="1" aria-label="Number of rapid EXTI13 trigger attempts">
+          <div class="burst-actions"><p>Choose 1–8. Trigger 1 runs, trigger 2 waits, and triggers 3+ are lost.</p><button class="burst-start" id="burstStartButton" type="button">Press B2</button></div>
+          <div class="request-stack" id="requestStack" aria-label="Accepted and lost interrupt triggers"></div>
+        </div>
+      </article>
+
+      <article class="panel story-panel">
+        <div class="phase-area">
+          <div class="phase-topline"><span class="phase-number" id="phaseNumber">Ready - Step 0</span><span class="status-pill" id="statusPill">CPU sleeping</span></div>
+          <h2 id="phaseTitle">Waiting for B1</h2>
+          <p id="phaseText">Green LD2 is on while the program waits. Press B1, then use Next and Previous to inspect every change.</p>
+          <div class="timeline" id="timeline"></div>
+          <div class="flow-strip" id="flowStrip">
+            <div class="flow-node" id="flow0" data-flow="0">B1 / PC13</div>
+            <div class="flow-node" id="flow1" data-flow="1">EXTI13</div>
+            <div class="flow-node" id="flow2" data-flow="2">Save state</div>
+            <div class="flow-node" id="flow3" data-flow="3">Red + timer</div>
+            <div class="flow-node" id="flow4" data-flow="4">TIM2 IRQ 41</div>
+            <div class="flow-node" id="flow5" data-flow="5">Green restored</div>
+          </div>
+          <div class="simple-box">
+            <div class="simple-stat"><span>CPU mode</span><strong id="cpuMode">Thread mode</strong></div>
+            <div class="simple-stat"><span>Current PC</span><strong id="currentPc">main() → __WFI()</strong></div>
+            <div class="simple-stat"><span>Stack pointer</span><strong id="stackPointer">0x20020000</strong></div>
+            <div class="simple-stat"><span>Green LD2 / PA9</span><strong id="greenLedState">ON</strong></div>
+            <div class="simple-stat"><span>Red LD3 / PB8</span><strong id="redLedState">OFF</strong></div>
+            <div class="simple-stat"><span>TIM2 one-shot</span><strong id="timerState">Stopped</strong></div>
+            <div class="simple-stat"><span>B2 trigger result</span><strong id="queueState">0 accepted · 0 lost</strong></div>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <section class="bottom-grid">
+      <article class="panel registers">
+        <div class="section-title"><h2>Live interrupt state</h2><span>Only the useful bits</span></div>
+        <div class="register-list">
+          <div class="register-group-label timer">B2 trigger-loss launcher · EXTI6 / IRQ 17</div>
+          <div class="reg-row" id="regB2Fpr"><div><div class="reg-name">EXTI_FPR1 · bit 6</div><div class="reg-meaning">B2 falling edge detected</div></div><span></span><span class="bit-value" id="b2FprValue">0</span></div>
+          <div class="reg-row" id="regB2Iser"><div><div class="reg-name">NVIC_ISER0 · bit 17</div><div class="reg-meaning">EXTI6 interrupt enabled</div></div><span></span><span class="bit-value one">1</span></div>
+          <div class="reg-row" id="regB2Ispr"><div><div class="reg-name">NVIC_ISPR0 · bit 17</div><div class="reg-meaning">B2 request pending</div></div><span></span><span class="bit-value" id="b2IsprValue">0</span></div>
+          <div class="reg-row" id="regB2Iabr"><div><div class="reg-name">NVIC_IABR0 · bit 17</div><div class="reg-meaning">B2 handler active</div></div><span></span><span class="bit-value" id="b2IabrValue">0</span></div>
+          <div class="reg-row" id="regTriggerSelected"><div><div class="reg-name">g_trigger_requests_selected</div><div class="reg-meaning">Number of rapid trigger attempts</div></div><span></span><span class="bit-value" id="triggerSelectedValue">0</span></div>
+          <div class="reg-row" id="regTriggerAccepted"><div><div class="reg-name">g_trigger_requests_accepted</div><div class="reg-meaning">Maximum: active trigger + one pending trigger</div></div><span></span><span class="bit-value" id="triggerAcceptedValue">0</span></div>
+          <div class="reg-row" id="regTriggerLost"><div><div class="reg-name">g_trigger_requests_lost</div><div class="reg-meaning">Trigger attempts beyond two</div></div><span></span><span class="bit-value" id="triggerLostValue">0</span></div>
+          <div class="reg-row" id="regExtiEntries"><div><div class="reg-name">g_exti13_entries</div><div class="reg-meaning">Actual EXTI13 handler runs</div></div><span></span><span class="bit-value" id="extiEntriesValue">0</span></div>
+          <div class="register-group-label">Interrupt 1 · B1 / EXTI13 / IRQ 24</div>
+          <div class="reg-row" id="regFpr"><div><div class="reg-name">EXTI_FPR1 · bit 13</div><div class="reg-meaning">PC13 falling edge detected</div></div><span></span><span class="bit-value" id="fprValue">0</span></div>
+          <div class="reg-row" id="regIser"><div><div class="reg-name">NVIC_ISER0 · bit 24</div><div class="reg-meaning">EXTI13 interrupt enabled</div></div><span></span><span class="bit-value one" id="iserValue">1</span></div>
+          <div class="reg-row" id="regIspr"><div><div class="reg-name">NVIC_ISPR0 · bit 24</div><div class="reg-meaning">Request waiting for CPU</div></div><span></span><span class="bit-value" id="isprValue">0</span></div>
+          <div class="reg-row" id="regIabr"><div><div class="reg-name">NVIC_IABR0 · bit 24</div><div class="reg-meaning">Handler is active now</div></div><span></span><span class="bit-value" id="iabrValue">0</span></div>
+          <div class="reg-row" id="regIpr"><div><div class="reg-name">NVIC_IPR[24]</div><div class="reg-meaning">Configured priority level 6</div></div><span></span><span class="bit-value" id="iprValue">0x60</span></div>
+          <div class="register-group-label timer">Interrupt 2 · TIM2 update / IRQ 41</div>
+          <div class="reg-row" id="regTimSr"><div><div class="reg-name">TIM2_SR · UIF bit</div><div class="reg-meaning">One-second count finished</div></div><span></span><span class="bit-value" id="timSrValue">0</span></div>
+          <div class="reg-row" id="regTimIser"><div><div class="reg-name">NVIC_ISER1 · bit 9</div><div class="reg-meaning">TIM2 interrupt enabled</div></div><span></span><span class="bit-value one" id="timIserValue">1</span></div>
+          <div class="reg-row" id="regTimIspr"><div><div class="reg-name">NVIC_ISPR1 · bit 9</div><div class="reg-meaning">Timer request waiting</div></div><span></span><span class="bit-value" id="timIsprValue">0</span></div>
+          <div class="reg-row" id="regTimIabr"><div><div class="reg-name">NVIC_IABR1 · bit 9</div><div class="reg-meaning">TIM2 handler active</div></div><span></span><span class="bit-value" id="timIabrValue">0</span></div>
+          <div class="reg-row" id="regTimIpr"><div><div class="reg-name">NVIC_IPR[41]</div><div class="reg-meaning">Configured priority level 7</div></div><span></span><span class="bit-value" id="timIprValue">0x70</span></div>
+        </div>
+
+        <div class="nvic-visual floating" id="nvicWindow" role="dialog" aria-modal="false" aria-label="NVIC register bits">
+          <div class="nvic-window-bar" id="nvicDragHandle"><strong>NVIC register bits</strong><div class="nvic-window-actions"><span>Drag · Resize · Background active</span><button class="nvic-close" id="nvicCloseButton" type="button">Close</button></div></div>
+          <div class="nvic-visual-head"><b>Live changes</b><span>Yellow = pending · Green = active</span></div>
+          <div class="bit-register"><div class="bit-register-title"><span>NVIC_ISPR0 · B2 bit 17 + EXTI13 bit 24</span><output id="ispr0Hex">0x00000000</output></div><div class="bit-grid" id="ispr0Bits"></div></div>
+          <div class="bit-register"><div class="bit-register-title"><span>NVIC_IABR0 · B2 bit 17 + EXTI13 bit 24</span><output id="iabr0Hex">0x00000000</output></div><div class="bit-grid" id="iabr0Bits"></div></div>
+          <div class="bit-register"><div class="bit-register-title"><span>NVIC_ISPR1 · TIM2 uses bit 9</span><output id="ispr1Hex">0x00000000</output></div><div class="bit-grid" id="ispr1Bits"></div></div>
+          <div class="bit-register"><div class="bit-register-title"><span>NVIC_IABR1 · TIM2 uses bit 9</span><output id="iabr1Hex">0x00000000</output></div><div class="bit-grid" id="iabr1Bits"></div></div>
+        </div>
+
+        <div class="stack-box">
+          <div class="stack-head"><b>Automatic CPU stack frame</b><span class="stack-state" id="stackState">Not saved yet</span></div>
+          <div class="stack-layers" id="stackLayers"></div>
+          <div class="stack-frame" id="stackFrame">
+            <div class="stack-cell"><span>R0</span><code>0x00000000</code></div>
+            <div class="stack-cell"><span>R1</span><code>0x20000120</code></div>
+            <div class="stack-cell"><span>R2</span><code>0x00002000</code></div>
+            <div class="stack-cell"><span>R3</span><code>0x40022000</code></div>
+            <div class="stack-cell"><span>R12</span><code>0x00000000</code></div>
+            <div class="stack-cell"><span>LR</span><code>0x08000171</code></div>
+            <div class="stack-cell"><span>PC</span><code>0x0800016C</code></div>
+            <div class="stack-cell"><span>xPSR</span><code>0x21000000</code></div>
+          </div>
+        </div>
+      </article>
+
+      <article class="panel code-panel">
+        <div class="section-title"><h2>Your firmware, animated</h2><span>The active line follows the demo</span></div>
+        <div class="tabs">
+          <button class="tab active" type="button" data-file="mainFile">main.c</button>
+          <button class="tab" type="button" data-file="hardwareFile">hardware_init.c</button>
+          <button class="tab" type="button" data-file="interruptFile">interrupts.c</button>
+        </div>
+        <div class="code-view">
+          <code class="code-file active" id="mainFile">
+<span class="code-line"><span class="kw">#include</span> <span class="fn">"hardware_init.h"</span></span>
+<span class="code-line"></span>
+<span class="code-line"><span class="type">int</span> <span class="fn">main</span>(<span class="type">void</span>)</span>
+<span class="code-line">{</span>
+<span class="code-line" data-phases="0">    <span class="fn">GPIO_Init</span>();</span>
+<span class="code-line" data-phases="0">    <span class="fn">TIM2_OneShot_Init</span>(); <span class="cm">/* interrupt 2 */</span></span>
+<span class="code-line" data-phases="0,1">    <span class="fn">EXTI_Button_Init</span>(); <span class="cm">/* interrupt 1 */</span></span>
+<span class="code-line"></span>
+<span class="code-line">    <span class="kw">for</span> (;;)</span>
+<span class="code-line">    {</span>
+<span class="code-line" data-phases="0,1,5,6,9">        <span class="fn">__WFI</span>(); <span class="cm">/* wait for B1, B2, or TIM2 */</span></span>
+<span class="code-line">    }</span>
+<span class="code-line">}</span>
+          </code>
+          <code class="code-file" id="hardwareFile">
+<span class="code-line"><span class="type">void</span> <span class="fn">EXTI_Button_Init</span>(<span class="type">void</span>)</span>
+<span class="code-line">{</span>
+<span class="code-line" data-phases="1">    EXTI-&gt;EXTICR[<span class="num">3</span>] |= (<span class="num">0x2UL</span> &lt;&lt; <span class="num">4U</span>); <span class="cm">/* B1: PC13 */</span></span>
+<span class="code-line" data-tags="b2-pending,b2-active">    EXTI-&gt;EXTICR[<span class="num">1</span>] |= (<span class="num">0x1UL</span> &lt;&lt; <span class="num">8U</span>); <span class="cm">/* B2: PB6 */</span></span>
+<span class="code-line" data-phases="1" data-tags="b2-pending,b2-active">    EXTI-&gt;IMR1 |= (BUTTON1_MASK | BUTTON2_MASK);</span>
+<span class="code-line" data-phases="1" data-tags="b2-pending">    EXTI-&gt;FTSR1 |= (BUTTON1_MASK | BUTTON2_MASK);</span>
+<span class="code-line"></span>
+<span class="code-line" data-phases="1">    <span class="fn">NVIC_SetPriority</span>(EXTI13_IRQn, <span class="num">6U</span>);</span>
+<span class="code-line" data-phases="1">    <span class="fn">NVIC_EnableIRQ</span>(EXTI13_IRQn);</span>
+<span class="code-line" data-tags="b2-pending,b2-active">    <span class="fn">NVIC_SetPriority</span>(EXTI6_IRQn, <span class="num">5U</span>);</span>
+<span class="code-line" data-tags="b2-pending,b2-active">    <span class="fn">NVIC_EnableIRQ</span>(EXTI6_IRQn);</span>
+<span class="code-line">}</span>
+<span class="code-line"></span>
+<span class="code-line"><span class="type">void</span> <span class="fn">TIM2_OneShot_Init</span>(<span class="type">void</span>)</span>
+<span class="code-line">{</span>
+<span class="code-line" data-phases="0,4">    TIM2-&gt;CR1 = TIM_CR1_OPM;</span>
+<span class="code-line" data-phases="0,4">    TIM2-&gt;PSC = <span class="num">15999U</span>; TIM2-&gt;ARR = <span class="num">999U</span>;</span>
+<span class="code-line" data-phases="0,4">    <span class="fn">NVIC_EnableIRQ</span>(TIM2_IRQn);</span>
+<span class="code-line">}</span>
+          </code>
+          <code class="code-file" id="interruptFile">
+<span class="code-line" data-tags="b2-pending,b2-active"><span class="kw">volatile</span> uint32_t g_trigger_requests_selected = <span class="num">0UL</span>;</span>
+<span class="code-line" data-tags="trigger2,trigger-lost"><span class="kw">volatile</span> uint32_t g_trigger_requests_accepted = <span class="num">0UL</span>;</span>
+<span class="code-line" data-tags="trigger-lost"><span class="kw">volatile</span> uint32_t g_trigger_requests_lost = <span class="num">0UL</span>;</span>
+<span class="code-line" data-tags="exti-active,exti-second"><span class="kw">volatile</span> uint32_t g_exti13_entries = <span class="num">0UL</span>;</span>
+<span class="code-line"></span>
+<span class="code-line" data-tags="b2-active"><span class="type">void</span> <span class="fn">EXTI6_IRQHandler</span>(<span class="type">void</span>)</span>
+<span class="code-line" data-tags="b2-active">{</span>
+<span class="code-line" data-tags="b2-active">    EXTI-&gt;FPR1 = EXTI_FPR1_FPIF6;</span>
+<span class="code-line" data-tags="b2-active">    g_trigger_requests_selected = B2_TRIGGER_COUNT;</span>
+<span class="code-line" data-tags="trigger1">    <span class="fn">NVIC_SetPendingIRQ</span>(EXTI13_IRQn); <span class="cm">/* trigger 1 */</span></span>
+<span class="code-line" data-tags="b2-active">}</span>
+<span class="code-line"></span>
+<span class="code-line"><span class="type">void</span> <span class="fn">EXTI13_IRQHandler</span>(<span class="type">void</span>)</span>
+<span class="code-line">{</span>
+<span class="code-line" data-phases="3" data-tags="exti-active,trigger2,trigger-lost,exti-second">    <span class="kw">if</span> ((EXTI-&gt;FPR1 &amp; EXTI_FPR1_FPIF13) || g_trigger_demo_active)</span>
+<span class="code-line">    {</span>
+<span class="code-line" data-phases="3" data-tags="exti-active,exti-second">        EXTI-&gt;FPR1 = EXTI_FPR1_FPIF13;</span>
+<span class="code-line" data-tags="trigger2,trigger-lost">        <span class="kw">for</span> (request = <span class="num">1</span>; request &lt; selected; request++)</span>
+<span class="code-line" data-tags="trigger2,trigger-lost">            <span class="fn">NVIC_SetPendingIRQ</span>(EXTI13_IRQn);</span>
+<span class="code-line" data-tags="trigger-lost">        g_trigger_requests_lost = selected - <span class="num">2UL</span>;</span>
+<span class="code-line" data-phases="4" data-tags="exti-active,exti-second">        <span class="fn">LEDs_Show_Interrupt</span>(); <span class="cm">/* green OFF, red ON */</span></span>
+<span class="code-line" data-phases="4" data-tags="exti-active,exti-second">        <span class="fn">TIM2_Start_OneSecond</span>();</span>
+<span class="code-line">    }</span>
+<span class="code-line">}</span>
+<span class="code-line"></span>
+<span class="code-line"><span class="type">void</span> <span class="fn">TIM2_IRQHandler</span>(<span class="type">void</span>)</span>
+<span class="code-line">{</span>
+<span class="code-line" data-phases="7" data-tags="timer-active">    <span class="kw">if</span> ((TIM2-&gt;SR &amp; TIM_SR_UIF) != <span class="num">0U</span>)</span>
+<span class="code-line">    {</span>
+<span class="code-line" data-phases="8" data-tags="timer-active">        TIM2-&gt;SR &amp;= ~TIM_SR_UIF;</span>
+<span class="code-line" data-phases="8" data-tags="timer-active">        <span class="fn">LEDs_Show_Normal</span>(); <span class="cm">/* green ON, red OFF */</span></span>
+<span class="code-line" data-phases="8" data-tags="timer-active">        EXTI-&gt;IMR1 |= BUTTON1_MASK;</span>
+<span class="code-line">    }</span>
+<span class="code-line" data-phases="9">}</span>
+          </code>
+        </div>
+      </article>
+    </section>
+
+  </main>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    (() => {
+      'use strict';
+
+      const defaults = {
+        title: '', text: '', status: '', flow: -1, file: 'mainFile', mode: 'Thread mode',
+        pc: 'main() -> __WFI()', sp: '0x20020000', timer: 'Stopped', red: false,
+        fpr: 0, ispr: 0, iabr: 0, b2Fpr: 0, b2Ispr: 0, b2Iabr: 0,
+        timSr: 0, timIspr: 0, timIabr: 0, triggerSelected: 0, triggerAccepted: 0, triggerLost: 0, extiEntries: 0,
+        requestTotal: 0, activeRequest: 0, pendingRequest: 0, stackDepth: 0, stackLabels: [], restored: false,
+        b1Pressed: false, b2Pressed: false, codeTag: ''
+      };
+      const phase = values => Object.assign({}, defaults, values);
+
+      const normalPhases = [
+        phase({ title: 'Normal state: green is on', text: 'Green LD2 is on, red LD3 is off, and main() waits for an interrupt.', status: 'Waiting for B1 or B2' }),
+        phase({ title: 'B1 triggers EXTI13', text: 'B1 pulls PC13 low. EXTI flag 13 and NVIC pending bit 24 change to 1.', status: 'EXTI13 pending', flow: 0, file: 'hardwareFile', fpr: 1, ispr: 1, b1Pressed: true }),
+        phase({ title: 'CPU saves the current state', text: 'Before the handler runs, the CPU saves R0-R3, R12, LR, PC, and xPSR.', status: 'Main state saved', flow: 2, mode: 'Exception entry', pc: 'Saved main() resume point', sp: '0x2001FFE0', fpr: 1, iabr: 1, b1Pressed: true, stackDepth: 1, stackLabels: ['Main saved for EXTI13'] }),
+        phase({ title: 'EXTI13 handler is active', text: 'NVIC active bit 24 is 1. The handler clears the button flag.', status: 'IRQ 24 active', flow: 1, file: 'interruptFile', mode: 'Handler mode', pc: 'EXTI13_IRQHandler()', sp: '0x2001FFE0', iabr: 1, b1Pressed: true, stackDepth: 1, stackLabels: ['Main saved for EXTI13'] }),
+        phase({ title: 'Red on, green off, TIM2 starts', text: 'The EXTI13 handler changes the LEDs and starts the internal one-second timer.', status: 'TIM2 counting', flow: 3, file: 'interruptFile', mode: 'Handler mode', pc: 'TIM2_Start_OneSecond()', sp: '0x2001FFE0', iabr: 1, timer: 'Counting to 1 s', red: true, stackDepth: 1, stackLabels: ['Main saved for EXTI13'] }),
+        phase({ title: 'EXTI13 returns to main', text: 'The CPU restores main. Red stays on while TIM2 continues counting.', status: 'Red interval', flow: 3, timer: 'Counting to 1 s', red: true, restored: true }),
+        phase({ title: 'TIM2 requests interrupt 2', text: 'After one second, TIM2 UIF and NVIC word 1 pending bit 9 change to 1.', status: 'TIM2 pending', flow: 4, timSr: 1, timIspr: 1, timer: 'Reached 1 s', red: true }),
+        phase({ title: 'CPU saves state for TIM2', text: 'Before TIM2_IRQHandler runs, the CPU saves the current main state.', status: 'TIM2 active', flow: 4, file: 'interruptFile', mode: 'Handler mode', pc: 'TIM2_IRQHandler()', sp: '0x2001FFE0', timSr: 1, timIabr: 1, timer: 'Finished', red: true, stackDepth: 1, stackLabels: ['Main saved for TIM2'] }),
+        phase({ title: 'TIM2 restores the green LED', text: 'TIM2 clears UIF, turns red off, and turns green on.', status: 'Green restored', flow: 5, file: 'interruptFile', mode: 'Handler mode', pc: 'LEDs_Show_Normal()', sp: '0x2001FFE0', timIabr: 1, stackDepth: 1, stackLabels: ['Main saved for TIM2'] }),
+        phase({ title: 'Ready again', text: 'The TIM2 frame is restored. Green stays on and the program waits again.', status: 'Cycle complete', restored: true })
+      ];
+
+      function makeBurstPhases(count) {
+        const accepted = Math.min(count, 2);
+        const lost = Math.max(count - 2, 0);
+        const list = [phase({ title: `Trigger-loss demo ready: ${count} attempts`, text: 'Green is on. Press B2, then use Next and Previous.', status: 'Waiting for B2', requestTotal: count })];
+        list.push(phase({ title: 'B2 triggers EXTI6', text: 'B2 pulls PB6 low. EXTI flag 6 and NVIC pending bit 17 become 1.', status: 'EXTI6 pending', flow: 0, file: 'hardwareFile', b2Fpr: 1, b2Ispr: 1, b2Pressed: true, requestTotal: count, codeTag: 'b2-pending' }));
+        list.push(phase({ title: 'B2 selects the rapid triggers', text: `EXTI6 becomes active and records ${count} trigger attempts for the demonstration.`, status: 'IRQ 17 active', flow: 1, file: 'interruptFile', mode: 'Handler mode', pc: 'EXTI6_IRQHandler()', sp: '0x2001FFE0', b2Iabr: 1, b2Pressed: true, triggerSelected: count, requestTotal: count, stackDepth: 1, stackLabels: ['Main saved for EXTI6'], codeTag: 'b2-active' }));
+        list.push(phase({ title: 'Trigger 1 becomes pending', text: 'B2 sets EXTI13 pending bit 24. This is the first accepted trigger.', status: 'Trigger 1 pending', flow: 2, file: 'interruptFile', mode: 'Handler mode', pc: 'NVIC_SetPendingIRQ()', sp: '0x2001FFE0', b2Iabr: 1, ispr: 1, triggerSelected: count, triggerAccepted: 1, requestTotal: count, pendingRequest: 1, stackDepth: 1, stackLabels: ['Main saved for EXTI6'], codeTag: 'trigger1' }));
+        list.push(phase({ title: 'Trigger 1 is active', text: 'EXTI13 pending clears and active bit 24 becomes 1. Green turns off and red turns on.', status: 'First handler entry', flow: 2, file: 'interruptFile', mode: 'Handler mode', pc: 'EXTI13_IRQHandler()', sp: '0x2001FFE0', iabr: 1, timer: 'Starting 1 s', red: true, triggerSelected: count, triggerAccepted: 1, extiEntries: 1, requestTotal: count, activeRequest: 1, stackDepth: 1, stackLabels: ['Main frame reused by tail-chain'], codeTag: 'exti-active' }));
+
+        if (count >= 2) {
+          list.push(phase({ title: 'Trigger 2 waits as pending', text: 'While trigger 1 is active, trigger 2 sets pending bit 24. Active and pending are both 1.', status: 'Second trigger stored', flow: 3, file: 'interruptFile', mode: 'Handler mode', pc: 'NVIC_SetPendingIRQ()', sp: '0x2001FFE0', ispr: 1, iabr: 1, timer: 'Starting 1 s', red: true, triggerSelected: count, triggerAccepted: 2, extiEntries: 1, requestTotal: count, activeRequest: 1, pendingRequest: 2, stackDepth: 1, stackLabels: ['Main saved; same IRQ cannot self-preempt'], codeTag: 'trigger2' }));
+        }
+        if (count > 2) {
+          list.push(phase({ title: `${lost} extra trigger${lost === 1 ? ' is' : 's are'} lost`, text: 'Pending bit 24 was already 1. More writes leave it at 1, so the NVIC does not remember triggers 3 and above.', status: `Accepted 2 · Lost ${lost}`, flow: 4, file: 'interruptFile', mode: 'Handler mode', pc: 'NVIC_SetPendingIRQ()', sp: '0x2001FFE0', ispr: 1, iabr: 1, timer: 'Starting 1 s', red: true, triggerSelected: count, triggerAccepted: 2, triggerLost: lost, extiEntries: 1, requestTotal: count, activeRequest: 1, pendingRequest: 2, stackDepth: 1, stackLabels: ['One active + one pending only'], codeTag: 'trigger-lost' }));
+        }
+        if (count >= 2) {
+          list.push(phase({ title: 'Trigger 2 becomes active', text: 'After trigger 1 returns, pending clears and EXTI13 runs once more. The lost triggers never run.', status: 'Second handler entry', flow: 3, file: 'interruptFile', mode: 'Handler mode', pc: 'EXTI13_IRQHandler()', sp: '0x2001FFE0', iabr: 1, timer: 'Restarting 1 s', red: true, triggerSelected: count, triggerAccepted: accepted, triggerLost: lost, extiEntries: 2, requestTotal: count, activeRequest: 2, stackDepth: 1, stackLabels: ['Main frame reused by tail-chain'], codeTag: 'exti-second' }));
+        }
+        list.push(phase({ title: 'TIM2 becomes pending', text: 'After one second, TIM2 UIF and NVIC pending bit 9 become 1.', status: 'TIM2 pending', flow: 5, timSr: 1, timIspr: 1, timer: 'Reached 1 s', red: true, triggerSelected: count, triggerAccepted: accepted, triggerLost: lost, extiEntries: accepted, requestTotal: count }));
+        list.push(phase({ title: 'TIM2 restores the green LED', text: 'TIM2 clears its flag, turns red off, and turns green on.', status: 'IRQ 41 active', flow: 5, file: 'interruptFile', mode: 'Handler mode', pc: 'TIM2_IRQHandler()', sp: '0x2001FFE0', timSr: 1, timIabr: 1, triggerSelected: count, triggerAccepted: accepted, triggerLost: lost, extiEntries: accepted, requestTotal: count, stackDepth: 1, stackLabels: ['Main saved for TIM2'], codeTag: 'timer-active' }));
+        list.push(phase({ title: 'Ready again', text: `${accepted} trigger${accepted === 1 ? '' : 's'} ran and ${lost} were lost. All NVIC pending and active bits are now 0.`, status: 'Demo complete', triggerSelected: count, triggerAccepted: accepted, triggerLost: lost, extiEntries: accepted, requestTotal: count, restored: true }));
+        return list;
+      }
+
+      let phases = normalPhases;
+      let demoKind = 'normal';
+
+      let step = 0;
+      let playing = false;
+      let timer = null;
+
+      const $ = id => document.getElementById(id);
+      const phaseNumber = $('phaseNumber');
+      const phaseTitle = $('phaseTitle');
+      const phaseText = $('phaseText');
+      const statusPill = $('statusPill');
+      const timeline = $('timeline');
+      const flowNodes = [...document.querySelectorAll('.flow-node')];
+      const b1Group = $('b1Group');
+      const b2Group = $('b2Group');
+      const ld2Group = $('ld2Group');
+      const ld3Group = $('ld3Group');
+      const mcuGroup = $('mcuGroup');
+      const signalPath = $('signalPath');
+      const b2SignalPath = $('b2SignalPath');
+      const stackFrame = $('stackFrame');
+      const stackState = $('stackState');
+      const stackLayers = $('stackLayers');
+      const burstControl = $('burstControl');
+      const burstSlider = $('burstSlider');
+      const requestStack = $('requestStack');
+      const nvicWindow = $('nvicWindow');
+      const nvicDragHandle = $('nvicDragHandle');
+      const toast = $('toast');
+      let nvicDrag = null;
+
+      function rebuildTimeline() {
+        timeline.replaceChildren();
+        for (let i = 0; i < phases.length; i += 1) {
+          const dot = document.createElement('span');
+          dot.className = 'timeline-step';
+          timeline.appendChild(dot);
+        }
+      }
+
+      function setBit(id, value) {
+        const element = $(id);
+        element.textContent = String(value);
+        element.classList.toggle('one', value === 1);
+      }
+
+      function buildNvicBits(containerId, targetBits) {
+        const targets = Array.isArray(targetBits) ? targetBits : [targetBits];
+        const container = $(containerId);
+        for (let bit = 31; bit >= 0; bit -= 1) {
+          const cell = document.createElement('span');
+          cell.className = 'nvic-bit' + (targets.includes(bit) ? ' target' : '');
+          cell.dataset.bit = String(bit);
+          cell.textContent = targets.includes(bit) ? String(bit) : '0';
+          cell.title = `bit ${bit}`;
+          container.appendChild(cell);
+        }
+      }
+
+      function setNvicRegister(containerId, outputId, states) {
+        let registerValue = 0;
+        $(containerId).querySelectorAll('.nvic-bit').forEach(cell => {
+          const bit = Number(cell.dataset.bit);
+          const state = states[bit] || '';
+          if (state) registerValue += 2 ** bit;
+          cell.classList.toggle('pending', state === 'pending');
+          cell.classList.toggle('active', state === 'active');
+          cell.textContent = Object.prototype.hasOwnProperty.call(states, bit) ? (state ? '1' : String(bit)) : '0';
+        });
+        $(outputId).textContent = `0x${registerValue.toString(16).toUpperCase().padStart(8, '0')}`;
+      }
+
+      function showFile(fileId) {
+        document.querySelectorAll('.code-file').forEach(file => file.classList.toggle('active', file.id === fileId));
+        document.querySelectorAll('.tab').forEach(tab => tab.classList.toggle('active', tab.dataset.file === fileId));
+      }
+
+      function highlightCode(index) {
+        const activeTag = phases[index].codeTag;
+        document.querySelectorAll('.code-line').forEach(line => {
+          const values = (line.dataset.phases || '').split(',').filter(Boolean).map(Number);
+          const tags = (line.dataset.tags || '').split(',').filter(Boolean);
+          const normalMatch = demoKind === 'normal' && values.includes(index);
+          line.classList.toggle('highlight', normalMatch || (activeTag && tags.includes(activeTag)));
+        });
+      }
+
+      function setFlowLabels() {
+        const labels = demoKind === 'burst'
+          ? ['B2 / PB6', 'EXTI6', 'Trigger 1', 'Trigger 2', 'Extra lost', 'TIM2 / Done']
+          : ['B1 / PC13', 'EXTI13', 'Save state', 'Red + timer', 'TIM2 IRQ 41', 'Green restored'];
+        flowNodes.forEach((node, index) => { node.textContent = labels[index]; });
+      }
+
+      function renderRequestChips(current) {
+        requestStack.replaceChildren();
+        for (let i = 0; i < current.requestTotal; i += 1) {
+          const chip = document.createElement('span');
+          const requestNumber = i + 1;
+          chip.className = 'request-chip';
+          if (requestNumber === current.activeRequest) chip.classList.add('active');
+          else if (requestNumber === current.pendingRequest) chip.classList.add('pending');
+          else if (requestNumber <= current.triggerAccepted) chip.classList.add('done');
+          else if (requestNumber > 2 && requestNumber <= 2 + current.triggerLost) chip.classList.add('lost');
+          chip.textContent = current.triggerLost > 0 && requestNumber > 2 ? `LOST ${requestNumber}` : `TRIG ${requestNumber}`;
+          requestStack.appendChild(chip);
+        }
+      }
+
+      function renderStack(current) {
+        stackLayers.replaceChildren();
+        current.stackLabels.forEach((label, index) => {
+          const layer = document.createElement('span');
+          layer.className = `stack-layer${index === 1 ? ' nested' : ''}`;
+          layer.textContent = `${index + 1}. ${label}`;
+          stackLayers.appendChild(layer);
+        });
+        const visible = current.stackDepth > 0;
+        stackLayers.classList.toggle('visible', visible);
+        stackFrame.classList.toggle('visible', visible);
+        stackState.classList.toggle('saved', visible || current.restored);
+        if (current.stackDepth === 2) stackState.textContent = '2 frames: nested interrupt';
+        else if (current.stackDepth === 1) stackState.textContent = '1 frame saved';
+        else if (current.restored) stackState.textContent = 'State restored';
+        else stackState.textContent = 'No saved frame';
+      }
+
+      function showToast(message) {
+        toast.textContent = message;
+        toast.classList.add('show');
+        window.setTimeout(() => toast.classList.remove('show'), 1700);
+      }
+
+      function render(index) {
+        const current = phases[index];
+        phaseNumber.textContent = `${index === 0 ? 'Ready' : 'Interrupt cycle'} - Step ${index} of ${phases.length - 1}`;
+        phaseTitle.textContent = current.title;
+        phaseText.textContent = current.text;
+        statusPill.textContent = current.status;
+        $('cpuMode').textContent = current.mode;
+        $('currentPc').textContent = current.pc;
+        $('stackPointer').textContent = current.sp;
+        $('timerState').textContent = current.timer;
+        $('queueState').textContent = `${current.triggerAccepted} accepted · ${current.triggerLost} lost`;
+        $('triggerSelectedValue').textContent = String(current.triggerSelected);
+        $('triggerAcceptedValue').textContent = String(current.triggerAccepted);
+        $('triggerLostValue').textContent = String(current.triggerLost);
+        $('extiEntriesValue').textContent = String(current.extiEntries);
+        $('triggerSelectedValue').classList.toggle('one', current.triggerSelected > 0);
+        $('triggerAcceptedValue').classList.toggle('one', current.triggerAccepted > 0);
+        $('triggerLostValue').classList.toggle('one', current.triggerLost > 0);
+        $('extiEntriesValue').classList.toggle('one', current.extiEntries > 0);
+        $('greenLedState').textContent = current.red ? 'OFF' : 'ON';
+        $('redLedState').textContent = current.red ? 'ON' : 'OFF';
+
+        [...timeline.children].forEach((dot, i) => {
+          dot.classList.toggle('active', i === index);
+          dot.classList.toggle('done', i < index);
+        });
+
+        flowNodes.forEach((node, i) => {
+          node.classList.toggle('active', i === current.flow);
+          node.classList.toggle('done', current.flow >= 0 && i < current.flow);
+        });
+
+        b1Group.classList.toggle('pressed', current.b1Pressed);
+        b2Group.classList.toggle('pressed', current.b2Pressed);
+        signalPath.classList.toggle('live', current.b1Pressed && (current.ispr === 1 || current.fpr === 1));
+        b2SignalPath.classList.toggle('live', current.b2Pressed || current.b2Ispr === 1);
+        mcuGroup.classList.toggle('active', current.iabr === 1 || current.b2Iabr === 1 || current.timIabr === 1);
+        ld2Group.classList.toggle('on', !current.red);
+        ld3Group.classList.toggle('on', current.red);
+
+        setBit('b2FprValue', current.b2Fpr);
+        setBit('b2IsprValue', current.b2Ispr);
+        setBit('b2IabrValue', current.b2Iabr);
+        setBit('fprValue', current.fpr);
+        setBit('isprValue', current.ispr);
+        setBit('iabrValue', current.iabr);
+        setBit('timSrValue', current.timSr);
+        setBit('timIsprValue', current.timIspr);
+        setBit('timIabrValue', current.timIabr);
+        $('regB2Fpr').classList.toggle('hot', current.b2Fpr === 1);
+        $('regB2Ispr').classList.toggle('hot', current.b2Ispr === 1);
+        $('regB2Iabr').classList.toggle('hot', current.b2Iabr === 1);
+        $('regTriggerSelected').classList.toggle('hot', current.triggerSelected > 0);
+        $('regTriggerAccepted').classList.toggle('hot', current.triggerAccepted > 0);
+        $('regTriggerLost').classList.toggle('hot', current.triggerLost > 0);
+        $('regExtiEntries').classList.toggle('hot', current.extiEntries > 0);
+        $('regFpr').classList.toggle('hot', current.fpr === 1);
+        $('regIspr').classList.toggle('hot', current.ispr === 1);
+        $('regIabr').classList.toggle('hot', current.iabr === 1);
+        $('regTimSr').classList.toggle('hot', current.timSr === 1);
+        $('regTimIspr').classList.toggle('hot', current.timIspr === 1);
+        $('regTimIabr').classList.toggle('hot', current.timIabr === 1);
+
+        setNvicRegister('ispr0Bits', 'ispr0Hex', { 17: current.b2Ispr ? 'pending' : '', 24: current.ispr ? 'pending' : '' });
+        setNvicRegister('iabr0Bits', 'iabr0Hex', { 17: current.b2Iabr ? 'active' : '', 24: current.iabr ? 'active' : '' });
+        setNvicRegister('ispr1Bits', 'ispr1Hex', { 9: current.timIspr ? 'pending' : '' });
+        setNvicRegister('iabr1Bits', 'iabr1Hex', { 9: current.timIabr ? 'active' : '' });
+        renderRequestChips(current);
+        renderStack(current);
+        showFile(current.file);
+        highlightCode(index);
+        $('nextButton').disabled = playing;
+        $('previousButton').disabled = playing || index === 0;
+        $('autoButton').disabled = playing;
+        $('pressButton').disabled = playing;
+        $('burstStartButton').disabled = playing;
+        burstSlider.disabled = playing;
+      }
+
+      function moveTo(next) {
+        step = Math.max(0, Math.min(next, phases.length - 1));
+        render(step);
+      }
+
+      function selectNormalDemo() {
+        demoKind = 'normal';
+        phases = normalPhases;
+        step = 0;
+        setFlowLabels();
+        rebuildTimeline();
+      }
+
+      function triggerB1() {
+        if (playing) return;
+        selectNormalDemo();
+        moveTo(1);
+        showToast('B1 pressed: use Next or Previous');
+      }
+
+      function triggerB2() {
+        if (playing) return;
+        const count = Number(burstSlider.value);
+        burstControl.classList.remove('open');
+        demoKind = 'burst';
+        phases = makeBurstPhases(count);
+        step = 0;
+        setFlowLabels();
+        rebuildTimeline();
+        moveTo(1);
+        showToast(`B2 pressed: ${count} trigger attempts`);
+      }
+
+      function nextStep() {
+        if (playing) return;
+        if (step >= phases.length - 1) {
+          moveTo(0);
+          showToast('Ready to show the sequence again');
+          return;
+        }
+        moveTo(step + 1);
+      }
+
+      function previousStep() {
+        if (!playing && step > 0) moveTo(step - 1);
+      }
+
+      function stopAuto() {
+        if (timer) window.clearInterval(timer);
+        timer = null;
+        playing = false;
+        render(step);
+      }
+
+      function runAuto() {
+        if (playing) return;
+        if (step !== 0) moveTo(0);
+        playing = true;
+        moveTo(1);
+        timer = window.setInterval(() => {
+          if (step >= phases.length - 1) {
+            stopAuto();
+            return;
+          }
+          moveTo(step + 1);
+        }, 900);
+      }
+
+      function resetDemo() {
+        stopAuto();
+        burstControl.classList.remove('open');
+        selectNormalDemo();
+        render(0);
+        showToast('Board simulation reset');
+      }
+
+      b1Group.addEventListener('click', event => {
+        event.stopPropagation();
+        triggerB1();
+      });
+
+      b2Group.addEventListener('click', event => {
+        event.stopPropagation();
+        burstControl.classList.add('open');
+        renderRequestChips(phase({ requestTotal: Number(burstSlider.value) }));
+      });
+
+      burstSlider.addEventListener('input', () => {
+        $('burstCount').textContent = burstSlider.value;
+        if (!playing && (demoKind !== 'burst' || step === 0)) {
+          renderRequestChips(phase({ requestTotal: Number(burstSlider.value) }));
+        }
+      });
+
+      $('b4Group').addEventListener('click', event => { event.stopPropagation(); resetDemo(); });
+      $('pressButton').addEventListener('click', triggerB1);
+      $('burstStartButton').addEventListener('click', triggerB2);
+      $('autoButton').addEventListener('click', runAuto);
+      $('nextButton').addEventListener('click', nextStep);
+      $('previousButton').addEventListener('click', previousStep);
+      $('resetButton').addEventListener('click', resetDemo);
+
+      $('nvicButton').addEventListener('click', () => {
+        nvicWindow.classList.add('open');
+        $('nvicButton').setAttribute('aria-expanded', 'true');
+      });
+      $('nvicCloseButton').addEventListener('click', event => {
+        event.stopPropagation();
+        nvicWindow.classList.remove('open');
+        $('nvicButton').setAttribute('aria-expanded', 'false');
+      });
+
+      nvicDragHandle.addEventListener('pointerdown', event => {
+        if (event.target.closest('button')) return;
+        const rect = nvicWindow.getBoundingClientRect();
+        nvicWindow.style.transform = 'none';
+        nvicWindow.style.left = `${rect.left}px`;
+        nvicWindow.style.top = `${rect.top}px`;
+        nvicDrag = { x: event.clientX - rect.left, y: event.clientY - rect.top };
+        nvicDragHandle.setPointerCapture(event.pointerId);
+      });
+      nvicDragHandle.addEventListener('pointermove', event => {
+        if (!nvicDrag) return;
+        const maxLeft = Math.max(0, window.innerWidth - nvicWindow.offsetWidth);
+        const maxTop = Math.max(0, window.innerHeight - 70);
+        nvicWindow.style.left = `${Math.max(0, Math.min(maxLeft, event.clientX - nvicDrag.x))}px`;
+        nvicWindow.style.top = `${Math.max(0, Math.min(maxTop, event.clientY - nvicDrag.y))}px`;
+      });
+      nvicDragHandle.addEventListener('pointerup', event => {
+        nvicDrag = null;
+        nvicDragHandle.releasePointerCapture(event.pointerId);
+      });
+
+      document.addEventListener('keydown', event => {
+        if (event.key === 'ArrowRight') nextStep();
+        if (event.key === 'ArrowLeft') previousStep();
+        if (event.key === 'Escape') {
+          nvicWindow.classList.remove('open');
+          $('nvicButton').setAttribute('aria-expanded', 'false');
+        }
+      });
+
+      document.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', () => showFile(tab.dataset.file));
+      });
+
+      function addHeaderPins(groupId, x) {
+        const group = $(groupId);
+        const ns = 'http://www.w3.org/2000/svg';
+        for (let row = 0; row < 20; row += 1) {
+          for (let col = 0; col < 2; col += 1) {
+            const circle = document.createElementNS(ns, 'circle');
+            circle.setAttribute('cx', String(x + col * 18));
+            circle.setAttribute('cy', String(281 + row * 22));
+            circle.setAttribute('r', '5');
+            circle.setAttribute('fill', '#c69e42');
+            group.appendChild(circle);
+          }
+        }
+      }
+
+      addHeaderPins('leftPins', 106);
+      addHeaderPins('rightPins', 592);
+      buildNvicBits('ispr0Bits', [17, 24]);
+      buildNvicBits('iabr0Bits', [17, 24]);
+      buildNvicBits('ispr1Bits', [9]);
+      buildNvicBits('iabr1Bits', [9]);
+
+      const query = new URLSearchParams(window.location.search);
+      const shortcutText = query.get('demo') || window.location.hash;
+      const shortcut = (shortcutText.match(/burst-(\d+)-(\d+)/) || []);
+      const queryCount = Math.max(1, Math.min(8, Number(shortcut[1] || query.get('count')) || 4));
+      burstSlider.value = String(queryCount);
+      $('burstCount').textContent = String(queryCount);
+      if (query.get('mode') === 'burst' || shortcut.length > 0) {
+        demoKind = 'burst';
+        phases = makeBurstPhases(queryCount);
+      }
+      setFlowLabels();
+      rebuildTimeline();
+      const requestedStep = Number(shortcut[2] || query.get('step'));
+      if (Number.isInteger(requestedStep) && requestedStep >= 0 && requestedStep < phases.length) step = requestedStep;
+      render(step);
+    })();
+  </script>
+</body>
+</html>
