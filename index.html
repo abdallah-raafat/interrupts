@@ -407,7 +407,7 @@
         <div class="phase-area">
           <div class="phase-topline"><span class="phase-number" id="phaseNumber">Ready - Step 0</span><span class="status-pill" id="statusPill">CPU sleeping</span></div>
           <h2 id="phaseTitle">Waiting for B1</h2>
-          <p id="phaseText">Green LD2 is on while the program waits. Press B1, then use Next and Previous to inspect every change.</p>
+          <p id="phaseText">Summary: The CPU is waiting; green is on and red is off.</p>
           <div class="timeline" id="timeline"></div>
           <div class="flow-strip" id="flowStrip">
             <div class="flow-node" id="flow0" data-flow="0">B1 / PC13</div>
@@ -420,7 +420,6 @@
           <div class="simple-box">
             <div class="simple-stat"><span>CPU mode</span><strong id="cpuMode">Thread mode</strong></div>
             <div class="simple-stat"><span>Current PC</span><strong id="currentPc">main() → __WFI()</strong></div>
-            <div class="simple-stat"><span>Stack pointer</span><strong id="stackPointer">0x20020000</strong></div>
             <div class="simple-stat"><span>Green LD2 / PA9</span><strong id="greenLedState">ON</strong></div>
             <div class="simple-stat"><span>Red LD3 / PB8</span><strong id="redLedState">OFF</strong></div>
             <div class="simple-stat"><span>TIM2 one-shot</span><strong id="timerState">Stopped</strong></div>
@@ -576,7 +575,7 @@
 
       const defaults = {
         title: '', text: '', status: '', flow: -1, file: 'mainFile', mode: 'Thread mode',
-        pc: 'main() -> __WFI()', sp: '0x20020000', timer: 'Stopped', red: false,
+        pc: 'main() -> __WFI()', timer: 'Stopped', red: false,
         fpr: 0, ispr: 0, iabr: 0, b2Fpr: 0, b2Ispr: 0, b2Iabr: 0,
         timSr: 0, timIspr: 0, timIabr: 0, triggerSelected: 0, triggerAccepted: 0, triggerLost: 0, extiEntries: 0,
         requestTotal: 0, activeRequest: 0, pendingRequest: 0, stackDepth: 0, stackLabels: [], restored: false,
@@ -585,26 +584,26 @@
       const phase = values => Object.assign({}, defaults, values);
 
       const normalPhases = [
-        phase({ title: 'Normal state: green is on', text: 'Green LD2 is on, red LD3 is off, and main() waits for an interrupt.', status: 'Waiting for B1 or B2' }),
-        phase({ title: 'B1 triggers EXTI13', text: 'B1 pulls PC13 low. EXTI flag 13 and NVIC pending bit 24 change to 1.', status: 'EXTI13 pending', flow: 0, file: 'hardwareFile', fpr: 1, ispr: 1, b1Pressed: true }),
-        phase({ title: 'CPU saves the current state', text: 'Before the handler runs, the CPU saves R0-R3, R12, LR, PC, and xPSR.', status: 'Main state saved', flow: 2, mode: 'Exception entry', pc: 'Saved main() resume point', sp: '0x2001FFE0', fpr: 1, iabr: 1, b1Pressed: true, stackDepth: 1, stackLabels: ['Main saved for EXTI13'] }),
-        phase({ title: 'EXTI13 handler is active', text: 'NVIC active bit 24 is 1. The handler clears the button flag.', status: 'IRQ 24 active', flow: 1, file: 'interruptFile', mode: 'Handler mode', pc: 'EXTI13_IRQHandler()', sp: '0x2001FFE0', iabr: 1, b1Pressed: true, stackDepth: 1, stackLabels: ['Main saved for EXTI13'] }),
-        phase({ title: 'Red on, green off, TIM2 starts', text: 'The EXTI13 handler changes the LEDs and starts the internal one-second timer.', status: 'TIM2 counting', flow: 3, file: 'interruptFile', mode: 'Handler mode', pc: 'TIM2_Start_OneSecond()', sp: '0x2001FFE0', iabr: 1, timer: 'Counting to 1 s', red: true, stackDepth: 1, stackLabels: ['Main saved for EXTI13'] }),
-        phase({ title: 'EXTI13 returns to main', text: 'The CPU restores main. Red stays on while TIM2 continues counting.', status: 'Red interval', flow: 3, timer: 'Counting to 1 s', red: true, restored: true }),
-        phase({ title: 'TIM2 requests interrupt 2', text: 'After one second, TIM2 UIF and NVIC word 1 pending bit 9 change to 1.', status: 'TIM2 pending', flow: 4, timSr: 1, timIspr: 1, timer: 'Reached 1 s', red: true }),
-        phase({ title: 'CPU saves state for TIM2', text: 'Before TIM2_IRQHandler runs, the CPU saves the current main state.', status: 'TIM2 active', flow: 4, file: 'interruptFile', mode: 'Handler mode', pc: 'TIM2_IRQHandler()', sp: '0x2001FFE0', timSr: 1, timIabr: 1, timer: 'Finished', red: true, stackDepth: 1, stackLabels: ['Main saved for TIM2'] }),
-        phase({ title: 'TIM2 restores the green LED', text: 'TIM2 clears UIF, turns red off, and turns green on.', status: 'Green restored', flow: 5, file: 'interruptFile', mode: 'Handler mode', pc: 'LEDs_Show_Normal()', sp: '0x2001FFE0', timIabr: 1, stackDepth: 1, stackLabels: ['Main saved for TIM2'] }),
-        phase({ title: 'Ready again', text: 'The TIM2 frame is restored. Green stays on and the program waits again.', status: 'Cycle complete', restored: true })
+        phase({ title: 'Ready', text: 'Summary: Green is on, red is off, and the CPU waits.', status: 'Waiting for B1 or B2' }),
+        phase({ title: 'B1 is pressed', text: 'Summary: EXTI13 is waiting for the CPU.', status: 'EXTI13 pending', flow: 0, file: 'hardwareFile', fpr: 1, ispr: 1, b1Pressed: true }),
+        phase({ title: 'EXTI13 starts', text: 'Summary: The CPU enters the B1 handler.', status: 'IRQ 24 active', flow: 2, mode: 'Exception entry', pc: 'EXTI13_IRQHandler()', fpr: 1, iabr: 1, b1Pressed: true, stackDepth: 1, stackLabels: ['Main saved for EXTI13'] }),
+        phase({ title: 'B1 flag is cleared', text: 'Summary: This B1 press is accepted and B1 is blocked briefly.', status: 'IRQ 24 active', flow: 1, file: 'interruptFile', mode: 'Handler mode', pc: 'EXTI13_IRQHandler()', iabr: 1, b1Pressed: true, stackDepth: 1, stackLabels: ['Main saved for EXTI13'] }),
+        phase({ title: 'Red state starts', text: 'Summary: Green turns off, red turns on, and TIM2 starts.', status: 'TIM2 counting', flow: 3, file: 'interruptFile', mode: 'Handler mode', pc: 'TIM2_Start_OneSecond()', iabr: 1, timer: 'Counting to 1 s', red: true, stackDepth: 1, stackLabels: ['Main saved for EXTI13'] }),
+        phase({ title: 'Timer is counting', text: 'Summary: The B1 handler ended. Red stays on while TIM2 counts.', status: 'Red interval', flow: 3, timer: 'Counting to 1 s', red: true, restored: true }),
+        phase({ title: 'TIM2 requests service', text: 'Summary: One second ended, so TIM2 is waiting for the CPU.', status: 'TIM2 pending', flow: 4, timSr: 1, timIspr: 1, timer: 'Reached 1 s', red: true }),
+        phase({ title: 'TIM2 starts', text: 'Summary: The CPU enters the timer handler.', status: 'TIM2 active', flow: 4, file: 'interruptFile', mode: 'Handler mode', pc: 'TIM2_IRQHandler()', timSr: 1, timIabr: 1, timer: 'Finished', red: true, stackDepth: 1, stackLabels: ['Main saved for TIM2'] }),
+        phase({ title: 'Normal LEDs restored', text: 'Summary: TIM2 turns red off, green on, and enables B1.', status: 'Green restored', flow: 5, file: 'interruptFile', mode: 'Handler mode', pc: 'LEDs_Show_Normal()', timIabr: 1, stackDepth: 1, stackLabels: ['Main saved for TIM2'] }),
+        phase({ title: 'Ready again', text: 'Summary: The timer handler ended and the CPU waits again.', status: 'Cycle complete', restored: true })
       ];
 
       function makeBurstPhases(count) {
         const accepted = Math.min(count, 2);
         const lost = Math.max(count - 2, 0);
-        const list = [phase({ title: `Trigger-loss demo ready: ${count} attempts`, text: 'Green is on. Press B2, then use Next and Previous.', status: 'Waiting for B2', requestTotal: count })];
-        list.push(phase({ title: 'B2 triggers EXTI6', text: 'B2 pulls PB6 low. EXTI flag 6 and NVIC pending bit 17 become 1.', status: 'EXTI6 pending', flow: 0, file: 'hardwareFile', b2Fpr: 1, b2Ispr: 1, b2Pressed: true, requestTotal: count, codeTag: 'b2-pending' }));
-        list.push(phase({ title: 'B2 selects the rapid triggers', text: `EXTI6 becomes active and records ${count} trigger attempts for the demonstration.`, status: 'IRQ 17 active', flow: 1, file: 'interruptFile', mode: 'Handler mode', pc: 'EXTI6_IRQHandler()', sp: '0x2001FFE0', b2Iabr: 1, b2Pressed: true, triggerSelected: count, requestTotal: count, stackDepth: 1, stackLabels: ['Main saved for EXTI6'], codeTag: 'b2-active' }));
-        list.push(phase({ title: 'Trigger 1 becomes pending', text: 'B2 sets EXTI13 pending bit 24. This is the first accepted trigger.', status: 'Trigger 1 pending', flow: 2, file: 'interruptFile', mode: 'Handler mode', pc: 'NVIC_SetPendingIRQ()', sp: '0x2001FFE0', b2Iabr: 1, ispr: 1, triggerSelected: count, triggerAccepted: 1, requestTotal: count, pendingRequest: 1, stackDepth: 1, stackLabels: ['Main saved for EXTI6'], codeTag: 'trigger1' }));
-        list.push(phase({ title: 'Trigger 1 is active', text: 'EXTI13 pending clears and active bit 24 becomes 1. Green turns off and red turns on.', status: 'First handler entry', flow: 2, file: 'interruptFile', mode: 'Handler mode', pc: 'EXTI13_IRQHandler()', sp: '0x2001FFE0', iabr: 1, timer: 'Starting 1 s', red: true, triggerSelected: count, triggerAccepted: 1, extiEntries: 1, requestTotal: count, activeRequest: 1, stackDepth: 1, stackLabels: ['Main frame reused by tail-chain'], codeTag: 'exti-active' }));
+        const list = [phase({ title: `B2 demo ready: ${count} attempts`, text: 'Summary: Choose B2 to show what the pending bit can remember.', status: 'Waiting for B2', requestTotal: count })];
+        list.push(phase({ title: 'B2 is pressed', text: 'Summary: EXTI6 is waiting for the CPU.', status: 'EXTI6 pending', flow: 0, file: 'hardwareFile', b2Fpr: 1, b2Ispr: 1, b2Pressed: true, requestTotal: count, codeTag: 'b2-pending' }));
+        list.push(phase({ title: 'EXTI6 starts', text: `Summary: B2 records ${count} rapid trigger attempts.`, status: 'IRQ 17 active', flow: 1, file: 'interruptFile', mode: 'Handler mode', pc: 'EXTI6_IRQHandler()', sp: '0x2001FFE0', b2Iabr: 1, b2Pressed: true, triggerSelected: count, requestTotal: count, stackDepth: 1, stackLabels: ['Main saved for EXTI6'], codeTag: 'b2-active' }));
+        list.push(phase({ title: 'Trigger 1 is pending', text: 'Summary: EXTI13 pending bit 24 stores the first request.', status: 'Trigger 1 pending', flow: 2, file: 'interruptFile', mode: 'Handler mode', pc: 'NVIC_SetPendingIRQ()', sp: '0x2001FFE0', b2Iabr: 1, ispr: 1, triggerSelected: count, triggerAccepted: 1, requestTotal: count, pendingRequest: 1, stackDepth: 1, stackLabels: ['Main saved for EXTI6'], codeTag: 'trigger1' }));
+        list.push(phase({ title: 'Trigger 1 runs', text: 'Summary: EXTI13 is active; green is off and red is on.', status: 'First handler entry', flow: 2, file: 'interruptFile', mode: 'Handler mode', pc: 'EXTI13_IRQHandler()', sp: '0x2001FFE0', iabr: 1, timer: 'Starting 1 s', red: true, triggerSelected: count, triggerAccepted: 1, extiEntries: 1, requestTotal: count, activeRequest: 1, stackDepth: 1, stackLabels: ['Main frame reused by tail-chain'], codeTag: 'exti-active' }));
 
         if (count >= 2) {
           list.push(phase({ title: 'Trigger 2 waits as pending', text: 'While trigger 1 is active, trigger 2 sets pending bit 24. Active and pending are both 1.', status: 'Second trigger stored', flow: 3, file: 'interruptFile', mode: 'Handler mode', pc: 'NVIC_SetPendingIRQ()', sp: '0x2001FFE0', ispr: 1, iabr: 1, timer: 'Starting 1 s', red: true, triggerSelected: count, triggerAccepted: 2, extiEntries: 1, requestTotal: count, activeRequest: 1, pendingRequest: 2, stackDepth: 1, stackLabels: ['Main saved; same IRQ cannot self-preempt'], codeTag: 'trigger2' }));
@@ -757,13 +756,12 @@
 
       function render(index) {
         const current = phases[index];
-        phaseNumber.textContent = `${index === 0 ? 'Ready' : 'Interrupt cycle'} - Step ${index} of ${phases.length - 1}`;
+        phaseNumber.textContent = `Step ${index} of ${phases.length - 1}`;
         phaseTitle.textContent = current.title;
         phaseText.textContent = current.text;
         statusPill.textContent = current.status;
         $('cpuMode').textContent = current.mode;
         $('currentPc').textContent = current.pc;
-        $('stackPointer').textContent = current.sp;
         $('timerState').textContent = current.timer;
         $('queueState').textContent = `${current.triggerAccepted} accepted · ${current.triggerLost} lost`;
         $('triggerSelectedValue').textContent = String(current.triggerSelected);
