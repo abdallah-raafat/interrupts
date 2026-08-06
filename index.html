@@ -578,7 +578,7 @@
       const normalPhases = [
         phase({ title: 'Ready', text: 'Summary: Green is on, red is off, and the CPU waits.', status: 'Waiting for B1 or B2' }),
         phase({ title: 'B1 is pressed', text: 'Summary: EXTI13 is waiting for the CPU.', status: 'EXTI13 pending', flow: 0, file: 'hardwareFile', fpr: 1, ispr: 1, b1Pressed: true }),
-        phase({ title: 'EXTI13 starts', text: 'Summary: The CPU enters the B1 handler.', status: 'IRQ 24 active', flow: 2, mode: 'Exception entry', pc: 'EXTI13_IRQHandler()', fpr: 1, iabr: 1, b1Pressed: true, stackDepth: 1, stackLabels: ['Main saved for EXTI13'] }),
+        phase({ title: 'Save state', text: 'Summary: The CPU saves its return state before entering the B1 handler.', status: 'IRQ 24 active', flow: 2, mode: 'Exception entry', pc: 'EXTI13_IRQHandler()', fpr: 1, iabr: 1, b1Pressed: true, stackDepth: 1, stackLabels: ['Main saved for EXTI13'] }),
         phase({ title: 'B1 flag is cleared', text: 'Summary: This B1 press is accepted and B1 is blocked briefly.', status: 'IRQ 24 active', flow: 1, file: 'interruptFile', mode: 'Handler mode', pc: 'EXTI13_IRQHandler()', iabr: 1, b1Pressed: true, stackDepth: 1, stackLabels: ['Main saved for EXTI13'] }),
         phase({ title: 'Red state starts', text: 'Summary: Green turns off, red turns on, and TIM2 starts.', status: 'TIM2 counting', flow: 3, file: 'interruptFile', mode: 'Handler mode', pc: 'TIM2_Start_OneSecond()', iabr: 1, timer: 'Counting to 1 s', red: true, stackDepth: 1, stackLabels: ['Main saved for EXTI13'] }),
         phase({ title: 'Timer is counting', text: 'Summary: The B1 handler ended. Red stays on while TIM2 counts.', status: 'Red interval', flow: 3, timer: 'Counting to 1 s', red: true, restored: true }),
