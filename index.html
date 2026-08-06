@@ -261,6 +261,7 @@
         </div>
       </div>
       <div class="controls">
+        <button class="control-btn" id="idleButton" type="button">Idle / wait</button>
         <button class="control-btn primary" id="pressButton" type="button">Press B1</button>
         <button class="control-btn" id="previousButton" type="button">Previous</button>
         <button class="control-btn" id="nextButton" type="button">Next step</button>
@@ -274,7 +275,7 @@
       <article class="panel">
         <div class="panel-heading">
           <h2>Interactive NUCLEO-WBA55CG board</h2>
-          <p>Use B1 normally or B2 to show trigger loss.</p>
+          <p>Default: idle in Thread mode. Use B1 normally or B2 to show trigger loss.</p>
         </div>
         <div class="board-wrap">
           <svg id="boardSvg" viewBox="0 0 740 940" role="img" aria-label="Interactive diagram of the NUCLEO-WBA55CG board">
@@ -845,6 +846,14 @@
         rebuildTimeline();
       }
 
+      function selectIdleState() {
+        stopAuto();
+        burstControl.classList.remove('open');
+        selectNormalDemo();
+        render(0);
+        showToast('Idle: CPU is in Thread mode and waiting');
+      }
+
       function triggerB1() {
         if (playing) return;
         selectNormalDemo();
@@ -903,9 +912,10 @@
       function resetDemo() {
         stopAuto();
         burstControl.classList.remove('open');
+        nvicWindow.classList.remove('open');
         selectNormalDemo();
         render(0);
-        showToast('Board simulation reset');
+        showToast('Reset: stable Thread-mode state restored');
       }
 
       b1Group.addEventListener('click', event => {
@@ -927,6 +937,7 @@
       });
 
       $('b4Group').addEventListener('click', event => { event.stopPropagation(); resetDemo(); });
+      $('idleButton').addEventListener('click', selectIdleState);
       $('pressButton').addEventListener('click', triggerB1);
       $('burstStartButton').addEventListener('click', triggerB2);
       $('autoButton').addEventListener('click', runAuto);
