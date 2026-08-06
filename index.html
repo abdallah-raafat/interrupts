@@ -476,8 +476,8 @@
         <div class="section-title"><h2>Your firmware, animated</h2><span>The active line follows the demo</span></div>
         <div class="tabs">
           <button class="tab active" type="button" data-file="mainFile">main.c</button>
-          <button class="tab" type="button" data-file="hardwareFile">hardware_init.c</button>
-          <button class="tab" type="button" data-file="interruptFile">interrupts.c</button>
+          <button class="tab" type="button" data-file="hardwareFile">hardware_init.h</button>
+          <button class="tab" type="button" data-file="interruptFile">interrupts.h</button>
         </div>
         <div class="code-view">
           <code class="code-file active" id="mainFile">
@@ -496,61 +496,43 @@
 <span class="code-line">}</span>
           </code>
           <code class="code-file" id="hardwareFile">
-<span class="code-line"><span class="type">void</span> <span class="fn">EXTI_Button_Init</span>(<span class="type">void</span>)</span>
-<span class="code-line">{</span>
-<span class="code-line" data-phases="1">    EXTI-&gt;EXTICR[<span class="num">3</span>] |= (<span class="num">0x2UL</span> &lt;&lt; <span class="num">4U</span>); <span class="cm">/* B1: PC13 */</span></span>
-<span class="code-line" data-tags="b2-pending,b2-active">    EXTI-&gt;EXTICR[<span class="num">1</span>] |= (<span class="num">0x1UL</span> &lt;&lt; <span class="num">8U</span>); <span class="cm">/* B2: PB6 */</span></span>
-<span class="code-line" data-phases="1" data-tags="b2-pending,b2-active">    EXTI-&gt;IMR1 |= (BUTTON1_MASK | BUTTON2_MASK);</span>
-<span class="code-line" data-phases="1" data-tags="b2-pending">    EXTI-&gt;FTSR1 |= (BUTTON1_MASK | BUTTON2_MASK);</span>
+<span class="code-line"><span class="kw">#ifndef</span> HARDWARE_INIT_H</span>
+<span class="code-line"><span class="kw">#define</span> HARDWARE_INIT_H</span>
 <span class="code-line"></span>
-<span class="code-line" data-phases="1">    <span class="fn">NVIC_SetPriority</span>(EXTI13_IRQn, <span class="num">6U</span>);</span>
-<span class="code-line" data-phases="1">    <span class="fn">NVIC_EnableIRQ</span>(EXTI13_IRQn);</span>
-<span class="code-line" data-tags="b2-pending,b2-active">    <span class="fn">NVIC_SetPriority</span>(EXTI6_IRQn, <span class="num">6U</span>); <span class="cm">/* same priority as B1 */</span></span>
-<span class="code-line" data-tags="b2-pending,b2-active">    <span class="fn">NVIC_EnableIRQ</span>(EXTI6_IRQn);</span>
-<span class="code-line">}</span>
+<span class="code-line"><span class="kw">#include</span> <span class="fn">"stm32wba55xx.h"</span></span>
 <span class="code-line"></span>
-<span class="code-line"><span class="type">void</span> <span class="fn">TIM2_OneShot_Init</span>(<span class="type">void</span>)</span>
-<span class="code-line">{</span>
-<span class="code-line" data-phases="0,4">    TIM2-&gt;CR1 = TIM_CR1_OPM;</span>
-<span class="code-line" data-phases="0,4">    TIM2-&gt;PSC = <span class="num">15999U</span>; TIM2-&gt;ARR = <span class="num">999U</span>;</span>
-<span class="code-line" data-phases="0,4">    <span class="fn">NVIC_EnableIRQ</span>(TIM2_IRQn);</span>
-<span class="code-line">}</span>
+<span class="code-line"><span class="kw">#define</span> GREEN_LED_PIN       <span class="num">9U</span></span>
+<span class="code-line"><span class="kw">#define</span> RED_LED_PIN         <span class="num">8U</span></span>
+<span class="code-line"><span class="kw">#define</span> BUTTON1_PIN         <span class="num">13U</span> <span class="cm">/* B1 / PC13 */</span></span>
+<span class="code-line"><span class="kw">#define</span> BUTTON2_PIN         <span class="num">6U</span>  <span class="cm">/* B2 / PB6 */</span></span>
+<span class="code-line"><span class="kw">#define</span> RED_TIME_MS         <span class="num">1000UL</span></span>
+<span class="code-line"><span class="kw">#define</span> B2_TRIGGER_COUNT    <span class="num">4UL</span></span>
+<span class="code-line"></span>
+<span class="code-line"><span class="type">void</span> <span class="fn">GPIO_Init</span>(<span class="type">void</span>);</span>
+<span class="code-line"><span class="type">void</span> <span class="fn">EXTI_Button_Init</span>(<span class="type">void</span>);</span>
+<span class="code-line"><span class="type">void</span> <span class="fn">TIM2_OneShot_Init</span>(<span class="type">void</span>);</span>
+<span class="code-line"><span class="type">void</span> <span class="fn">TIM2_Start_OneSecond</span>(<span class="type">void</span>);</span>
+<span class="code-line"><span class="type">void</span> <span class="fn">LEDs_Show_Normal</span>(<span class="type">void</span>);</span>
+<span class="code-line"><span class="type">void</span> <span class="fn">LEDs_Show_Interrupt</span>(<span class="type">void</span>);</span>
+<span class="code-line"></span>
+<span class="code-line"><span class="kw">#endif</span></span>
           </code>
           <code class="code-file" id="interruptFile">
-<span class="code-line" data-tags="b2-pending,b2-active"><span class="kw">volatile</span> uint32_t g_trigger_requests_selected = <span class="num">0UL</span>;</span>
-<span class="code-line" data-tags="trigger2,trigger-lost"><span class="kw">volatile</span> uint32_t g_trigger_requests_accepted = <span class="num">0UL</span>;</span>
-<span class="code-line" data-tags="trigger-lost"><span class="kw">volatile</span> uint32_t g_trigger_requests_lost = <span class="num">0UL</span>;</span>
-<span class="code-line" data-tags="exti-active,exti-second"><span class="kw">volatile</span> uint32_t g_exti13_entries = <span class="num">0UL</span>;</span>
+<span class="code-line"><span class="kw">#ifndef</span> INTERRUPTS_H</span>
+<span class="code-line"><span class="kw">#define</span> INTERRUPTS_H</span>
 <span class="code-line"></span>
-<span class="code-line" data-tags="b2-active"><span class="type">void</span> <span class="fn">EXTI6_IRQHandler</span>(<span class="type">void</span>)</span>
-<span class="code-line" data-tags="b2-active">{</span>
-<span class="code-line" data-tags="b2-active">    EXTI-&gt;FPR1 = EXTI_FPR1_FPIF6;</span>
-<span class="code-line" data-tags="b2-active">    g_trigger_requests_selected = B2_TRIGGER_COUNT;</span>
-<span class="code-line" data-tags="trigger1">    <span class="fn">NVIC_SetPendingIRQ</span>(EXTI13_IRQn); <span class="cm">/* trigger 1 */</span></span>
-<span class="code-line" data-tags="b2-active">}</span>
+<span class="code-line"><span class="kw">#include</span> <span class="fn">&lt;stdint.h&gt;</span></span>
 <span class="code-line"></span>
-<span class="code-line"><span class="type">void</span> <span class="fn">EXTI13_IRQHandler</span>(<span class="type">void</span>)</span>
-<span class="code-line">{</span>
-<span class="code-line" data-phases="3" data-tags="exti-active,trigger2,trigger-lost,exti-second">    <span class="kw">if</span> ((EXTI-&gt;FPR1 &amp; EXTI_FPR1_FPIF13) || g_trigger_demo_active)</span>
-<span class="code-line">    {</span>
-<span class="code-line" data-phases="3" data-tags="exti-active,exti-second">        EXTI-&gt;FPR1 = EXTI_FPR1_FPIF13;</span>
-<span class="code-line" data-tags="trigger2,trigger-lost">        <span class="kw">for</span> (request = <span class="num">1</span>; request &lt; selected; request++)</span>
-<span class="code-line" data-tags="trigger2,trigger-lost">            <span class="fn">NVIC_SetPendingIRQ</span>(EXTI13_IRQn);</span>
-<span class="code-line" data-tags="trigger-lost">        g_trigger_requests_lost = selected - <span class="num">2UL</span>;</span>
-<span class="code-line" data-phases="4" data-tags="exti-active,exti-second">        <span class="fn">LEDs_Show_Interrupt</span>(); <span class="cm">/* green OFF, red ON */</span></span>
-<span class="code-line" data-phases="4" data-tags="exti-active,exti-second">        <span class="fn">TIM2_Start_OneSecond</span>();</span>
-<span class="code-line">    }</span>
-<span class="code-line">}</span>
+<span class="code-line"><span class="kw">extern</span> <span class="kw">volatile</span> uint32_t g_trigger_requests_selected;</span>
+<span class="code-line"><span class="kw">extern</span> <span class="kw">volatile</span> uint32_t g_trigger_requests_accepted;</span>
+<span class="code-line"><span class="kw">extern</span> <span class="kw">volatile</span> uint32_t g_trigger_requests_lost;</span>
+<span class="code-line"><span class="kw">extern</span> <span class="kw">volatile</span> uint32_t g_exti13_entries;</span>
 <span class="code-line"></span>
-<span class="code-line"><span class="type">void</span> <span class="fn">TIM2_IRQHandler</span>(<span class="type">void</span>)</span>
-<span class="code-line">{</span>
-<span class="code-line" data-phases="7" data-tags="timer-active">    <span class="kw">if</span> ((TIM2-&gt;SR &amp; TIM_SR_UIF) != <span class="num">0U</span>)</span>
-<span class="code-line">    {</span>
-<span class="code-line" data-phases="8" data-tags="timer-active">        TIM2-&gt;SR &amp;= ~TIM_SR_UIF;</span>
-<span class="code-line" data-phases="8" data-tags="timer-active">        <span class="fn">LEDs_Show_Normal</span>(); <span class="cm">/* green ON, red OFF */</span></span>
-<span class="code-line" data-phases="8" data-tags="timer-active">        EXTI-&gt;IMR1 |= BUTTON1_MASK;</span>
-<span class="code-line">    }</span>
-<span class="code-line" data-phases="9">}</span>
+<span class="code-line"><span class="type">void</span> <span class="fn">EXTI6_IRQHandler</span>(<span class="type">void</span>);  <span class="cm">/* B2 / IRQ 17 */</span></span>
+<span class="code-line"><span class="type">void</span> <span class="fn">EXTI13_IRQHandler</span>(<span class="type">void</span>); <span class="cm">/* B1 / IRQ 24 */</span></span>
+<span class="code-line"><span class="type">void</span> <span class="fn">TIM2_IRQHandler</span>(<span class="type">void</span>);   <span class="cm">/* timer / IRQ 41 */</span></span>
+<span class="code-line"></span>
+<span class="code-line"><span class="kw">#endif</span></span>
           </code>
         </div>
       </article>
