@@ -182,10 +182,6 @@
     .nvic-visual { padding: 13px; border-radius: 15px; background: #081827; border: 1px solid rgba(255,202,104,.42); overflow: auto; }
     .nvic-visual.floating { display: none; position: fixed; z-index: 100; left: 50%; top: 50%; width: min(850px, calc(100vw - 32px)); height: min(610px, calc(100vh - 32px)); min-width: 580px; min-height: 330px; margin: 0; resize: both; transform: translate(-50%, -50%); box-shadow: 0 28px 90px rgba(0,0,0,.72); }
     .nvic-visual.floating.open { display: block; }
-    .nvic-visual.inline { display: block; margin: 0; border: 0; background: transparent; overflow: visible; }
-    .nvic-visual.inline .nvic-window-bar { position: static; margin: 0 0 12px; border: 1px solid var(--line); border-radius: 12px; cursor: default; }
-    .nvic-visual.inline .nvic-window-actions { display: none; }
-    .registers > .section-title, .registers > .register-list { display: none; }
     .nvic-window-bar { position: sticky; top: -13px; z-index: 3; display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: -13px -13px 12px; padding: 12px 14px; background: #142b43; border-bottom: 1px solid var(--line); cursor: move; user-select: none; }
     .nvic-window-bar strong { color: var(--amber); }
     .nvic-window-actions { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: .72rem; }
@@ -451,8 +447,8 @@
           <div class="reg-row" id="regTimIpr"><div><div class="reg-name">NVIC_IPR[41]</div><div class="reg-meaning">Configured priority level 7</div></div><span></span><span class="bit-value" id="timIprValue">0x70</span></div>
         </div>
 
-        <div class="nvic-visual inline" id="nvicWindow" role="region" aria-label="NVIC register bits">
-          <div class="nvic-window-bar" id="nvicDragHandle"><strong>NVIC register bits</strong><div class="nvic-window-actions"><span>Live values</span></div></div>
+        <div class="nvic-visual floating" id="nvicWindow" role="dialog" aria-modal="false" aria-label="NVIC register bits">
+          <div class="nvic-window-bar" id="nvicDragHandle"><strong>NVIC register bits</strong><div class="nvic-window-actions"><span>Drag · Resize · Background active</span><button class="nvic-close" id="nvicCloseButton" type="button">Close</button></div></div>
           <div class="nvic-visual-head"><b>Live changes</b><span>Yellow = pending · Green = active</span></div>
           <div class="bit-register"><div class="bit-register-title"><span>NVIC_ISPR0 · B2 bit 17 + EXTI13 bit 24</span><output id="ispr0Hex">0x00000000</output></div><div class="bit-grid" id="ispr0Bits"></div></div>
           <div class="bit-register"><div class="bit-register-title"><span>NVIC_IABR0 · B2 bit 17 + EXTI13 bit 24</span><output id="iabr0Hex">0x00000000</output></div><div class="bit-grid" id="iabr0Bits"></div></div>
@@ -646,7 +642,6 @@
       const nvicDragHandle = $('nvicDragHandle');
       const toast = $('toast');
       let nvicDrag = null;
-
 
       function rebuildTimeline() {
         timeline.replaceChildren();
@@ -922,12 +917,43 @@
       $('resetButton').addEventListener('click', resetDemo);
 
       $('nvicButton').addEventListener('click', () => {
-        nvicWindow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        nvicWindow.classList.add('open');
+        $('nvicButton').setAttribute('aria-expanded', 'true');
+      });
+      $('nvicCloseButton').addEventListener('click', event => {
+        event.stopPropagation();
+        nvicWindow.classList.remove('open');
+        $('nvicButton').setAttribute('aria-expanded', 'false');
+      });
+
+      nvicDragHandle.addEventListener('pointerdown', event => {
+        if (event.target.closest('button')) return;
+        const rect = nvicWindow.getBoundingClientRect();
+        nvicWindow.style.transform = 'none';
+        nvicWindow.style.left = `${rect.left}px`;
+        nvicWindow.style.top = `${rect.top}px`;
+        nvicDrag = { x: event.clientX - rect.left, y: event.clientY - rect.top };
+        nvicDragHandle.setPointerCapture(event.pointerId);
+      });
+      nvicDragHandle.addEventListener('pointermove', event => {
+        if (!nvicDrag) return;
+        const maxLeft = Math.max(0, window.innerWidth - nvicWindow.offsetWidth);
+        const maxTop = Math.max(0, window.innerHeight - 70);
+        nvicWindow.style.left = `${Math.max(0, Math.min(maxLeft, event.clientX - nvicDrag.x))}px`;
+        nvicWindow.style.top = `${Math.max(0, Math.min(maxTop, event.clientY - nvicDrag.y))}px`;
+      });
+      nvicDragHandle.addEventListener('pointerup', event => {
+        nvicDrag = null;
+        nvicDragHandle.releasePointerCapture(event.pointerId);
       });
 
       document.addEventListener('keydown', event => {
         if (event.key === 'ArrowRight') nextStep();
         if (event.key === 'ArrowLeft') previousStep();
+        if (event.key === 'Escape') {
+          nvicWindow.classList.remove('open');
+          $('nvicButton').setAttribute('aria-expanded', 'false');
+        }
       });
 
       document.querySelectorAll('.tab').forEach(tab => {
