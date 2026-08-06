@@ -703,7 +703,7 @@
       function setFlowLabels() {
         const labels = demoKind === 'burst'
           ? ['B2 / PB6', 'EXTI6', 'Trigger 1', 'Trigger 2', 'Extra lost', 'TIM2 / Done']
-          : ['B1 / PC13', 'EXTI13', 'Save state', 'Red + timer', 'TIM2 IRQ 41', 'Green restored'];
+          : ['B1 / PC13', 'EXTI13', 'Save state', 'Timer', 'TIM2 IRQ 41', 'Green restored'];
         flowNodes.forEach((node, index) => { node.textContent = labels[index]; });
       }
 
