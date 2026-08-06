@@ -423,8 +423,6 @@
             <div class="simple-stat"><span>Current PC</span><strong id="currentPc">main() → __WFI()</strong></div>
             <div class="simple-stat"><span>Green LD2 / PA9</span><strong id="greenLedState">ON</strong></div>
             <div class="simple-stat"><span>Red LD3 / PB8</span><strong id="redLedState">OFF</strong></div>
-            <div class="simple-stat"><span>TIM2 one-shot</span><strong id="timerState">Stopped</strong></div>
-            <div class="simple-stat"><span>B2 trigger result</span><strong id="queueState">0 accepted · 0 lost</strong></div>
           </div>
         </div>
       </article>
@@ -703,7 +701,7 @@
       function setFlowLabels() {
         const labels = demoKind === 'burst'
           ? ['B2 / PB6', 'EXTI6', 'Trigger 1', 'Trigger 2', 'Extra lost', 'TIM2 / Done']
-          : ['B1 / PC13', 'Save state', 'External interrupt', 'Timer', 'TIM2 IRQ 41', 'Green restored'];
+          : ['B1 / PC13', 'Save state', 'EXTI13 IRQ 24', 'Timer', 'TIM2 IRQ 41', 'Green restored'];
         flowNodes.forEach((node, index) => { node.textContent = labels[index]; });
       }
 
@@ -754,8 +752,6 @@
         statusPill.textContent = current.status;
         $('cpuMode').textContent = current.mode;
         $('currentPc').textContent = current.pc;
-        $('timerState').textContent = current.timer;
-        $('queueState').textContent = `${current.triggerAccepted} accepted · ${current.triggerLost} lost`;
         $('greenLedState').textContent = current.red ? 'OFF' : 'ON';
         $('redLedState').textContent = current.red ? 'ON' : 'OFF';
 
