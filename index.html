@@ -515,7 +515,7 @@
 <span class="code-line"></span>
 <span class="code-line" data-phases="1">    <span class="fn">NVIC_SetPriority</span>(EXTI13_IRQn, <span class="num">6U</span>);</span>
 <span class="code-line" data-phases="1">    <span class="fn">NVIC_EnableIRQ</span>(EXTI13_IRQn);</span>
-<span class="code-line" data-tags="b2-pending,b2-active">    <span class="fn">NVIC_SetPriority</span>(EXTI6_IRQn, <span class="num">5U</span>);</span>
+<span class="code-line" data-tags="b2-pending,b2-active">    <span class="fn">NVIC_SetPriority</span>(EXTI6_IRQn, <span class="num">6U</span>); <span class="cm">/* same priority as B1 */</span></span>
 <span class="code-line" data-tags="b2-pending,b2-active">    <span class="fn">NVIC_EnableIRQ</span>(EXTI6_IRQn);</span>
 <span class="code-line">}</span>
 <span class="code-line"></span>
