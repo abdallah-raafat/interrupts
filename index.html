@@ -434,15 +434,6 @@
       <article class="panel registers">
         <div class="section-title"><h2>Live interrupt state</h2><span>Only the useful bits</span></div>
         <div class="register-list">
-          <div class="register-group-label timer">B2 trigger-loss launcher · EXTI6 / IRQ 17</div>
-          <div class="reg-row" id="regB2Fpr"><div><div class="reg-name">EXTI_FPR1 · bit 6</div><div class="reg-meaning">B2 falling edge detected</div></div><span></span><span class="bit-value" id="b2FprValue">0</span></div>
-          <div class="reg-row" id="regB2Iser"><div><div class="reg-name">NVIC_ISER0 · bit 17</div><div class="reg-meaning">EXTI6 interrupt enabled</div></div><span></span><span class="bit-value one">1</span></div>
-          <div class="reg-row" id="regB2Ispr"><div><div class="reg-name">NVIC_ISPR0 · bit 17</div><div class="reg-meaning">B2 request pending</div></div><span></span><span class="bit-value" id="b2IsprValue">0</span></div>
-          <div class="reg-row" id="regB2Iabr"><div><div class="reg-name">NVIC_IABR0 · bit 17</div><div class="reg-meaning">B2 handler active</div></div><span></span><span class="bit-value" id="b2IabrValue">0</span></div>
-          <div class="reg-row" id="regTriggerSelected"><div><div class="reg-name">g_trigger_requests_selected</div><div class="reg-meaning">Number of rapid trigger attempts</div></div><span></span><span class="bit-value" id="triggerSelectedValue">0</span></div>
-          <div class="reg-row" id="regTriggerAccepted"><div><div class="reg-name">g_trigger_requests_accepted</div><div class="reg-meaning">Maximum: active trigger + one pending trigger</div></div><span></span><span class="bit-value" id="triggerAcceptedValue">0</span></div>
-          <div class="reg-row" id="regTriggerLost"><div><div class="reg-name">g_trigger_requests_lost</div><div class="reg-meaning">Trigger attempts beyond two</div></div><span></span><span class="bit-value" id="triggerLostValue">0</span></div>
-          <div class="reg-row" id="regExtiEntries"><div><div class="reg-name">g_exti13_entries</div><div class="reg-meaning">Actual EXTI13 handler runs</div></div><span></span><span class="bit-value" id="extiEntriesValue">0</span></div>
           <div class="register-group-label">Interrupt 1 · B1 / EXTI13 / IRQ 24</div>
           <div class="reg-row" id="regFpr"><div><div class="reg-name">EXTI_FPR1 · bit 13</div><div class="reg-meaning">PC13 falling edge detected</div></div><span></span><span class="bit-value" id="fprValue">0</span></div>
           <div class="reg-row" id="regIser"><div><div class="reg-name">NVIC_ISER0 · bit 24</div><div class="reg-meaning">EXTI13 interrupt enabled</div></div><span></span><span class="bit-value one" id="iserValue">1</span></div>
@@ -765,14 +756,6 @@
         $('currentPc').textContent = current.pc;
         $('timerState').textContent = current.timer;
         $('queueState').textContent = `${current.triggerAccepted} accepted · ${current.triggerLost} lost`;
-        $('triggerSelectedValue').textContent = String(current.triggerSelected);
-        $('triggerAcceptedValue').textContent = String(current.triggerAccepted);
-        $('triggerLostValue').textContent = String(current.triggerLost);
-        $('extiEntriesValue').textContent = String(current.extiEntries);
-        $('triggerSelectedValue').classList.toggle('one', current.triggerSelected > 0);
-        $('triggerAcceptedValue').classList.toggle('one', current.triggerAccepted > 0);
-        $('triggerLostValue').classList.toggle('one', current.triggerLost > 0);
-        $('extiEntriesValue').classList.toggle('one', current.extiEntries > 0);
         $('greenLedState').textContent = current.red ? 'OFF' : 'ON';
         $('redLedState').textContent = current.red ? 'ON' : 'OFF';
 
@@ -794,22 +777,12 @@
         ld2Group.classList.toggle('on', !current.red);
         ld3Group.classList.toggle('on', current.red);
 
-        setBit('b2FprValue', current.b2Fpr);
-        setBit('b2IsprValue', current.b2Ispr);
-        setBit('b2IabrValue', current.b2Iabr);
         setBit('fprValue', current.fpr);
         setBit('isprValue', current.ispr);
         setBit('iabrValue', current.iabr);
         setBit('timSrValue', current.timSr);
         setBit('timIsprValue', current.timIspr);
         setBit('timIabrValue', current.timIabr);
-        $('regB2Fpr').classList.toggle('hot', current.b2Fpr === 1);
-        $('regB2Ispr').classList.toggle('hot', current.b2Ispr === 1);
-        $('regB2Iabr').classList.toggle('hot', current.b2Iabr === 1);
-        $('regTriggerSelected').classList.toggle('hot', current.triggerSelected > 0);
-        $('regTriggerAccepted').classList.toggle('hot', current.triggerAccepted > 0);
-        $('regTriggerLost').classList.toggle('hot', current.triggerLost > 0);
-        $('regExtiEntries').classList.toggle('hot', current.extiEntries > 0);
         $('regFpr').classList.toggle('hot', current.fpr === 1);
         $('regIspr').classList.toggle('hot', current.ispr === 1);
         $('regIabr').classList.toggle('hot', current.iabr === 1);
