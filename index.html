@@ -578,8 +578,8 @@
       const normalPhases = [
         phase({ title: 'Ready', text: 'Summary: Green is on, red is off, and the CPU waits.', status: 'Waiting for B1 or B2' }),
         phase({ title: 'B1 is pressed', text: 'Summary: EXTI13 is waiting for the CPU.', status: 'EXTI13 pending', flow: 0, file: 'hardwareFile', fpr: 1, ispr: 1, b1Pressed: true }),
-        phase({ title: 'Save state', text: 'Summary: The CPU saves its return state before entering the B1 handler.', status: 'IRQ 24 active', flow: 2, mode: 'Exception entry', pc: 'EXTI13_IRQHandler()', fpr: 1, iabr: 1, b1Pressed: true, stackDepth: 1, stackLabels: ['Main saved for EXTI13'] }),
-        phase({ title: 'B1 flag is cleared', text: 'Summary: This B1 press is accepted and B1 is blocked briefly.', status: 'IRQ 24 active', flow: 1, file: 'interruptFile', mode: 'Handler mode', pc: 'EXTI13_IRQHandler()', iabr: 1, b1Pressed: true, stackDepth: 1, stackLabels: ['Main saved for EXTI13'] }),
+        phase({ title: 'Save state', text: 'Summary: The CPU saves its return state before entering the B1 handler.', status: 'IRQ 24 active', flow: 1, mode: 'Exception entry', pc: 'EXTI13_IRQHandler()', fpr: 1, iabr: 1, b1Pressed: true, stackDepth: 1, stackLabels: ['Main saved for EXTI13'] }),
+        phase({ title: 'B1 flag is cleared', text: 'Summary: This B1 press is accepted and B1 is blocked briefly.', status: 'IRQ 24 active', flow: 2, file: 'interruptFile', mode: 'Handler mode', pc: 'EXTI13_IRQHandler()', iabr: 1, b1Pressed: true, stackDepth: 1, stackLabels: ['Main saved for EXTI13'] }),
         phase({ title: 'Red state starts', text: 'Summary: Green turns off, red turns on, and TIM2 starts.', status: 'TIM2 counting', flow: 3, file: 'interruptFile', mode: 'Handler mode', pc: 'TIM2_Start_OneSecond()', iabr: 1, timer: 'Counting to 1 s', red: true, stackDepth: 1, stackLabels: ['Main saved for EXTI13'] }),
         phase({ title: 'Timer is counting', text: 'Summary: The B1 handler ended. Red stays on while TIM2 counts.', status: 'Red interval', flow: 3, timer: 'Counting to 1 s', red: true, restored: true }),
         phase({ title: 'TIM2 requests service', text: 'Summary: One second ended, so TIM2 is waiting for the CPU.', status: 'TIM2 pending', flow: 4, timSr: 1, timIspr: 1, timer: 'Reached 1 s', red: true }),
@@ -703,7 +703,7 @@
       function setFlowLabels() {
         const labels = demoKind === 'burst'
           ? ['B2 / PB6', 'EXTI6', 'Trigger 1', 'Trigger 2', 'Extra lost', 'TIM2 / Done']
-          : ['B1 / PC13', 'EXTI13', 'Save state', 'Timer', 'TIM2 IRQ 41', 'Green restored'];
+          : ['B1 / PC13', 'Save state', 'External interrupt', 'Timer', 'TIM2 IRQ 41', 'Green restored'];
         flowNodes.forEach((node, index) => { node.textContent = labels[index]; });
       }
 
