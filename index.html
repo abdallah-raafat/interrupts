@@ -114,16 +114,7 @@
     @keyframes chipPulse { from { r: 64; opacity: .7; } to { r: 92; opacity: 0; } }
 
     .story-panel { display: flex; flex-direction: column; min-height: 760px; }
-    .phase-area { width: 100%; margin-top: auto; padding: 18px 20px 20px; border-top: 1px solid var(--line); }
-    .story-panel > .simple-box { flex: 0 0 auto; margin: 18px 20px 0; }
-    .story-registers { flex: 0 0 auto; margin: 12px 20px 0; }
-    .story-registers .section-title { margin-bottom: 8px; }
-    .story-registers .register-list { grid-template-columns: 1fr 1fr; gap: 6px; }
-    .story-registers .register-group-label { grid-column: 1 / -1; margin-top: 5px; }
-    .story-registers .reg-row { grid-template-columns: 1fr auto; gap: 7px; padding: 7px 9px; }
-    .story-registers .reg-row > span:nth-child(2), .story-registers .reg-meaning { display: none; }
-    .story-registers .reg-name { font-size: .7rem; }
-    .story-registers .bit-value { min-width: 30px; padding: 4px 6px; font-size: .75rem; }
+    .phase-area { padding: 20px; }
     .phase-topline { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
     .phase-number { color: var(--cyan); text-transform: uppercase; font-size: .76rem; font-weight: 900; letter-spacing: .12em; }
     .status-pill { padding: 7px 10px; border-radius: 999px; background: rgba(86, 243, 154, .12); border: 1px solid rgba(86,243,154,.25); color: var(--green); font-size: .78rem; font-weight: 800; }
@@ -191,6 +182,10 @@
     .nvic-visual { padding: 13px; border-radius: 15px; background: #081827; border: 1px solid rgba(255,202,104,.42); overflow: auto; }
     .nvic-visual.floating { display: none; position: fixed; z-index: 100; left: 50%; top: 50%; width: min(850px, calc(100vw - 32px)); height: min(610px, calc(100vh - 32px)); min-width: 580px; min-height: 330px; margin: 0; resize: both; transform: translate(-50%, -50%); box-shadow: 0 28px 90px rgba(0,0,0,.72); }
     .nvic-visual.floating.open { display: block; }
+    .nvic-visual.inline { display: block; margin: 0; border: 0; background: transparent; overflow: visible; }
+    .nvic-visual.inline .nvic-window-bar { position: static; margin: 0 0 12px; border: 1px solid var(--line); border-radius: 12px; cursor: default; }
+    .nvic-visual.inline .nvic-window-actions { display: none; }
+    .registers > .section-title, .registers > .register-list { display: none; }
     .nvic-window-bar { position: sticky; top: -13px; z-index: 3; display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: -13px -13px 12px; padding: 12px 14px; background: #142b43; border-bottom: 1px solid var(--line); cursor: move; user-select: none; }
     .nvic-window-bar strong { color: var(--amber); }
     .nvic-window-actions { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: .72rem; }
@@ -254,7 +249,6 @@
       .flow-strip { grid-template-columns: 1fr; }
       .flow-node:not(:last-child)::after { content: '↓'; right: 50%; top: auto; bottom: -14px; }
       .simple-box { grid-template-columns: 1fr 1fr; }
-      .story-registers .register-list { grid-template-columns: 1fr; }
       .nvic-visual.floating { min-width: 0; width: calc(100vw - 16px); }
       .stack-frame { grid-template-columns: repeat(2, 1fr); }
     }
@@ -457,8 +451,8 @@
           <div class="reg-row" id="regTimIpr"><div><div class="reg-name">NVIC_IPR[41]</div><div class="reg-meaning">Configured priority level 7</div></div><span></span><span class="bit-value" id="timIprValue">0x70</span></div>
         </div>
 
-        <div class="nvic-visual floating" id="nvicWindow" role="dialog" aria-modal="false" aria-label="NVIC register bits">
-          <div class="nvic-window-bar" id="nvicDragHandle"><strong>NVIC register bits</strong><div class="nvic-window-actions"><span>Drag · Resize · Background active</span><button class="nvic-close" id="nvicCloseButton" type="button">Close</button></div></div>
+        <div class="nvic-visual inline" id="nvicWindow" role="region" aria-label="NVIC register bits">
+          <div class="nvic-window-bar" id="nvicDragHandle"><strong>NVIC register bits</strong><div class="nvic-window-actions"><span>Live values</span></div></div>
           <div class="nvic-visual-head"><b>Live changes</b><span>Yellow = pending · Green = active</span></div>
           <div class="bit-register"><div class="bit-register-title"><span>NVIC_ISPR0 · B2 bit 17 + EXTI13 bit 24</span><output id="ispr0Hex">0x00000000</output></div><div class="bit-grid" id="ispr0Bits"></div></div>
           <div class="bit-register"><div class="bit-register-title"><span>NVIC_IABR0 · B2 bit 17 + EXTI13 bit 24</span><output id="iabr0Hex">0x00000000</output></div><div class="bit-grid" id="iabr0Bits"></div></div>
@@ -653,18 +647,6 @@
       const toast = $('toast');
       let nvicDrag = null;
 
-      /* Put the compact live NVIC rows in the free area above the current-step card. */
-      const storyPanel = document.querySelector('.story-panel');
-      const phaseArea = storyPanel.querySelector('.phase-area');
-      const simpleBox = storyPanel.querySelector('.simple-box');
-      const registersPanel = document.querySelector('.registers');
-      const liveRegistersTitle = registersPanel.querySelector('.section-title');
-      const liveRegistersList = registersPanel.querySelector('.register-list');
-      const storyRegisters = document.createElement('section');
-      storyRegisters.className = 'story-registers';
-      storyRegisters.append(liveRegistersTitle, liveRegistersList);
-      storyPanel.insertBefore(simpleBox, phaseArea);
-      storyPanel.insertBefore(storyRegisters, phaseArea);
 
       function rebuildTimeline() {
         timeline.replaceChildren();
@@ -940,43 +922,12 @@
       $('resetButton').addEventListener('click', resetDemo);
 
       $('nvicButton').addEventListener('click', () => {
-        nvicWindow.classList.add('open');
-        $('nvicButton').setAttribute('aria-expanded', 'true');
-      });
-      $('nvicCloseButton').addEventListener('click', event => {
-        event.stopPropagation();
-        nvicWindow.classList.remove('open');
-        $('nvicButton').setAttribute('aria-expanded', 'false');
-      });
-
-      nvicDragHandle.addEventListener('pointerdown', event => {
-        if (event.target.closest('button')) return;
-        const rect = nvicWindow.getBoundingClientRect();
-        nvicWindow.style.transform = 'none';
-        nvicWindow.style.left = `${rect.left}px`;
-        nvicWindow.style.top = `${rect.top}px`;
-        nvicDrag = { x: event.clientX - rect.left, y: event.clientY - rect.top };
-        nvicDragHandle.setPointerCapture(event.pointerId);
-      });
-      nvicDragHandle.addEventListener('pointermove', event => {
-        if (!nvicDrag) return;
-        const maxLeft = Math.max(0, window.innerWidth - nvicWindow.offsetWidth);
-        const maxTop = Math.max(0, window.innerHeight - 70);
-        nvicWindow.style.left = `${Math.max(0, Math.min(maxLeft, event.clientX - nvicDrag.x))}px`;
-        nvicWindow.style.top = `${Math.max(0, Math.min(maxTop, event.clientY - nvicDrag.y))}px`;
-      });
-      nvicDragHandle.addEventListener('pointerup', event => {
-        nvicDrag = null;
-        nvicDragHandle.releasePointerCapture(event.pointerId);
+        nvicWindow.scrollIntoView({ behavior: 'smooth', block: 'center' });
       });
 
       document.addEventListener('keydown', event => {
         if (event.key === 'ArrowRight') nextStep();
         if (event.key === 'ArrowLeft') previousStep();
-        if (event.key === 'Escape') {
-          nvicWindow.classList.remove('open');
-          $('nvicButton').setAttribute('aria-expanded', 'false');
-        }
       });
 
       document.querySelectorAll('.tab').forEach(tab => {
